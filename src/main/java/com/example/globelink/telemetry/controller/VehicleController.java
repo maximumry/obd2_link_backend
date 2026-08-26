@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RestController("/api/v1/telemetry/")
 public class VehicleController {
 
-    @GetMapping("{deviceId}")
+    @GetMapping("{trip_id}")
     public String getTelemetry(@PathVariable String deviceId, @RequestParam String param) {
         return new String();
     }

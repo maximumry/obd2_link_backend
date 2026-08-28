@@ -1,4 +1,4 @@
-package com.example.globelink.trip.controller.dto;
+package com.example.globelink.trip.dto;
 
 import lombok.Data;
 

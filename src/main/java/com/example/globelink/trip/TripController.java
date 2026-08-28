@@ -1,11 +1,15 @@
-package com.example.globelink.trip.controller;
+package com.example.globelink.trip;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.globelink.trip.dto.TripSummaryResponse;
 import com.example.globelink.trip.service.TripService;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController("/api/trips/")
+@RequiredArgsConstructor
 public class TripController {
 
     private final TripService tripService;
@@ -16,7 +20,7 @@ public class TripController {
      * @return
      */
     @GetMapping
-    public String getTrips() {
+    public TripSummaryResponse getTrips() {
         return tripService.getTrips();
     }
     

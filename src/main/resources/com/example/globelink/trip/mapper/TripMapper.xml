@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.globelink.trip.mapper.TripMapper">
+
+    <!-- 全件取得 -->
+    <select id="getTrips" resultType="com.example.globelink.trip.dto.TripSummaryResponse"
+        resultType="com.example.globelink.trip.dto.TripSummaryResponse">
+        SELECT
+            id,
+            name,
+            email
+        FROM users
+    </select>
+
+    <!-- 全件取得 -->
+    <select id="findAll" resultType="com.example.globelink.model.User">
+        SELECT
+            id,
+            name,
+            email
+        FROM users
+    </select>
+
+    <!-- 登録 -->
+    <insert id="insert" parameterType="com.example.globelink.model.User">
+        INSERT INTO users (
+            name,
+            email
+        )
+        VALUES (
+            #{name},
+            #{email}
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.example.globelink.model.User">
+        UPDATE users
+        SET
+            name = #{name},
+            email = #{email}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 削除 -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM users
+        WHERE id = #{id}
+    </delete>
+
+</mapper>

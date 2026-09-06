@@ -6,8 +6,7 @@
 <mapper namespace="com.example.globelink.trip.mapper.TripMapper">
 
     <!-- 全件取得 -->
-    <select id="getTrips" resultType="com.example.globelink.trip.dto.TripSummaryResponse"
-        resultType="com.example.globelink.trip.dto.TripSummaryResponse">
+    <select id="getTrips" resultType="com.example.globelink.trip.dto.TripSummaryResponse">
         SELECT
             id,
             name,
@@ -16,16 +15,16 @@
     </select>
 
     <!-- 全件取得 -->
-    <select id="findAll" resultType="com.example.globelink.model.User">
+    <!-- <select id="findAll" resultType="com.example.globelink.model.User">
         SELECT
             id,
             name,
             email
         FROM users
-    </select>
+    </select> -->
 
     <!-- 登録 -->
-    <insert id="insert" parameterType="com.example.globelink.model.User">
+    <!-- <insert id="insert" parameterType="com.example.globelink.model.User">
         INSERT INTO users (
             name,
             email
@@ -34,21 +33,21 @@
             #{name},
             #{email}
         )
-    </insert>
+    </insert> -->
 
     <!-- 更新 -->
-    <update id="update" parameterType="com.example.globelink.model.User">
+    <!-- <update id="update" parameterType="com.example.globelink.model.User">
         UPDATE users
         SET
             name = #{name},
             email = #{email}
         WHERE id = #{id}
-    </update>
+    </update> -->
 
     <!-- 削除 -->
-    <delete id="deleteById" parameterType="java.lang.Long">
+    <!-- <delete id="deleteById" parameterType="java.lang.Long">
         DELETE FROM users
         WHERE id = #{id}
-    </delete>
+    </delete> -->
 
 </mapper>

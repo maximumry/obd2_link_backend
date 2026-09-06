@@ -1,0 +1,73 @@
+{
+  "deviceId": "logger-01",
+  "tripId": "550e8400-e29b-41d4-a716-446655440001",
+  "startedAt": "2026-09-05T03:00:00.000Z",
+  "endedAt": null,
+  "samples": [
+    {
+      "sequence": 465,
+      "timestamp": "2026-09-05T03:07:45.000Z",
+      "rpm": 2327.35,
+      "speedKmh": 42.21,
+      "throttlePct": 21.11,
+      "coolantC": 80,
+      "intakeAirC": 25,
+      "latitude": 35.000465,
+      "longitude": 139.000465,
+      "altitude": 20,
+      "gpsSpeedKmh": 42.21
+    },
+    {
+      "sequence": 466,
+      "timestamp": "2026-09-05T03:07:46.000Z",
+      "rpm": 2318.25,
+      "speedKmh": 41.95,
+      "throttlePct": 20.98,
+      "coolantC": 80,
+      "intakeAirC": 25,
+      "latitude": 35.000466,
+      "longitude": 139.000466,
+      "altitude": 20,
+      "gpsSpeedKmh": 41.95
+    },
+    {
+      "sequence": 467,
+      "timestamp": "2026-09-05T03:07:47.000Z",
+      "rpm": 2309.15,
+      "speedKmh": 41.69,
+      "throttlePct": 20.84,
+      "coolantC": 80,
+      "intakeAirC": 25,
+      "latitude": 35.000467,
+      "longitude": 139.000467,
+      "altitude": 20,
+      "gpsSpeedKmh": 41.69
+    },
+    {
+      "sequence": 468,
+      "timestamp": "2026-09-05T03:07:48.000Z",
+      "rpm": 2300.05,
+      "speedKmh": 41.43,
+      "throttlePct": 20.71,
+      "coolantC": 80,
+      "intakeAirC": 25,
+      "latitude": 35.000468,
+      "longitude": 139.000468,
+      "altitude": 20,
+      "gpsSpeedKmh": 41.43
+    },
+    {
+      "sequence": 469,
+      "timestamp": "2026-09-05T03:07:49.000Z",
+      "rpm": 2290.95,
+      "speedKmh": 41.17,
+      "throttlePct": 20.59,
+      "coolantC": 80,
+      "intakeAirC": 25,
+      "latitude": 35.000469,
+      "longitude": 139.000469,
+      "altitude": 20,
+      "gpsSpeedKmh": 41.17
+    }
+  ]
+}

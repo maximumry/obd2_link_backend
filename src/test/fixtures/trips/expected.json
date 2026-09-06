@@ -1,0 +1,26 @@
+[
+  {
+    "case": "completed",
+    "tripId": "550e8400-e29b-41d4-a716-446655440001",
+    "deviceId": "logger-01",
+    "startedAt": "2026-09-05T03:00:00.000Z",
+    "endedAt": "2026-09-05T03:10:00.000Z",
+    "telemetryCount": 600
+  },
+  {
+    "case": "gps-null",
+    "tripId": "550e8400-e29b-41d4-a716-446655440002",
+    "deviceId": "logger-01",
+    "startedAt": "2026-09-05T04:00:00.000Z",
+    "endedAt": "2026-09-05T04:02:00.000Z",
+    "telemetryCount": 120
+  },
+  {
+    "case": "unfinished",
+    "tripId": "550e8400-e29b-41d4-a716-446655440003",
+    "deviceId": "logger-01",
+    "startedAt": "2026-09-05T05:00:00.000Z",
+    "endedAt": null,
+    "telemetryCount": 60
+  }
+]

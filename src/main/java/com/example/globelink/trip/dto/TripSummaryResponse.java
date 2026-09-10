@@ -1,6 +1,7 @@
 package com.example.globelink.trip.dto;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import lombok.Data;
 
@@ -14,7 +15,7 @@ public class TripSummaryResponse {
     /**
      * 走行データのID
      */
-    private String tripId;
+    private UUID tripId;
 
     /**
      * デバイスID
@@ -32,8 +33,8 @@ public class TripSummaryResponse {
     private Instant endedAt;
 
     /**
-     * テレメトリデータ数
+     * 最後に受信した日時
      */
-    private long telemetryCount;
-    
+    private Instant lastReceivedAt;
+
 }

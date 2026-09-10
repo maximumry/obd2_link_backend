@@ -1,5 +1,7 @@
 package com.example.globelink.trip.service;
 
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 
 import com.example.globelink.trip.dto.TripSummaryResponse;
@@ -12,8 +14,8 @@ import com.example.globelink.trip.dto.TripSummaryResponse;
 public interface TripService {
 
     /**
-     * 全走行データの取得
+     * 一回の走行データの取得
      */
-    TripSummaryResponse getTrips();
+    TripSummaryResponse getTrip(UUID tripId);
 
 }

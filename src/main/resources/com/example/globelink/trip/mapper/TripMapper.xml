@@ -6,12 +6,13 @@
 <mapper namespace="com.example.globelink.trip.mapper.TripMapper">
 
     <!-- 全件取得 -->
-    <select id="getTrips" resultType="com.example.globelink.trip.dto.TripSummaryResponse">
+    <select id="getTrip" resultType="com.example.globelink.trip.dto.TripSummaryResponse">
         SELECT
             id,
             name,
             email
-        FROM users
+        FROM trips
+        WHERE id = #{tripId}
     </select>
 
     <!-- 全件取得 -->

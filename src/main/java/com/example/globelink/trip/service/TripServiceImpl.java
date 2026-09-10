@@ -1,5 +1,7 @@
 package com.example.globelink.trip.service;
 
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 
 import com.example.globelink.trip.dto.TripSummaryResponse;
@@ -17,8 +19,8 @@ public class TripServiceImpl implements TripService {
     private final TripMapper tripMapper;
 
     @Override
-    public TripSummaryResponse getTrips() {
-        return tripMapper.getTrips();
+    public TripSummaryResponse getTrip(UUID tripId) {
+        return tripMapper.getTrip(tripId);
     }
     
 }

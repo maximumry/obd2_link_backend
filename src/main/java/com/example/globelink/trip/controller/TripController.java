@@ -1,6 +1,9 @@
 package com.example.globelink.trip.controller;
 
+import java.util.UUID;
+
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.globelink.trip.dto.TripSummaryResponse;
@@ -19,9 +22,9 @@ public class TripController {
      * @param tripId
      * @return
      */
-    @GetMapping
-    public TripSummaryResponse getTrips() {
-        return tripService.getTrips();
+    @GetMapping("/{tripId}")
+    public TripSummaryResponse getTrip(@PathVariable UUID tripId) {
+        return tripService.getTrip(tripId);
     }
     
 }

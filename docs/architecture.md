@@ -5,19 +5,20 @@
 ```text
 iPhoneアプリ ── HTTPS / JSON ──┐
                                ├─ Spring Boot ─ MyBatis ─ PostgreSQL
-OBD2記録端末 ─ HTTPS / JSON ──┘       │
-                                      └─ SMTP（パスワード再設定）
+OBD2記録端末 ─ HTTPS / JSON ──┘
 ```
 
-バックエンドは単一アプリとし、Controller（HTTP・入力検証）→ Service（業務処理・所有者確認）→ Mapper（SQL）に分ける。認証はSpring Security、入力検証はBean Validation、DBスキーマ管理はFlywayを使用する。
+バックエンドは単一アプリとし、Controller（HTTP・入力検証）→ Service（業務処理・所有者確認）→ Mapper（SQL）に分ける。認証はSpring SecurityとWebAuthn検証ライブラリ、入力検証はBean Validation、DBスキーマ管理はFlywayを使用する。
 
 ## DB
 
 | テーブル | 主なカラム |
 | --- | --- |
-| `users` | `id`、`email`（一意）、`password_hash`、`display_name`、`created_at` |
+| `users` | `id`、`email`（一意）、`display_name`、`created_at` |
 | `sessions` | `id`、`user_id`、`token_hash`、`expires_at` |
-| `password_reset_tokens` | `id`、`user_id`、`token_hash`、`expires_at` |
+| `passkeys` | `credential_id`（主キー）、`user_id`、`public_key`、`sign_count`、`name`、`created_at` |
+| `auth_challenges` | `id`、`challenge`、`purpose`、`user_id`（登録時は仮ID）、`session_id`（再認証時）、`registration_data`（登録時のみ）、`expires_at` |
+| `reauth_tokens` | `id`、`session_id`、`token_hash`、`purpose`、`target_id`、`expires_at` |
 | `devices` | `id`、`user_id`（一意）、`token_hash` |
 | `trips` | `trip_id`、`device_id`、`started_at`、`ended_at`、`last_received_at`、`deleted_at` |
 | `telemetry` | `device_id`、`trip_id`、`sequence`、`timestamp`、`received_at`、計測値 |
@@ -36,17 +37,23 @@ OBD2記録端末 ─ HTTPS / JSON ──┘       │
 
 | メソッド・パス | 認証 | 内容 |
 | --- | --- | --- |
-| `POST /auth/register` | 不要 | メール・パスワード・表示名で登録 |
-| `POST /auth/login` | 不要 | トークンと有効期限を取得 |
+| `POST /auth/register/options` | 不要 | メール・表示名を受け取り、パスキー登録チャレンジを発行 |
+| `POST /auth/register/verify` | 不要 | 登録応答を検証し、アカウント・パスキーを作成 |
+| `POST /auth/login/options` | 不要 | パスキー認証チャレンジを発行 |
+| `POST /auth/login/verify` | 不要 | 署名を検証し、ユーザートークンと有効期限を発行 |
 | `POST /auth/logout` | 本人 | 現在のセッションを削除 |
-| `POST /auth/password-reset/request` | 不要 | 再設定メールを送信 |
-| `POST /auth/password-reset/confirm` | 不要 | パスワードを更新し、全ユーザーセッションを失効 |
+| `POST /auth/reauth/options` | 本人 | 操作用途を指定して再認証チャレンジを発行 |
+| `POST /auth/reauth/verify` | 本人 | パスキーを検証し、操作用の再認証トークンを発行 |
+| `GET /me/passkeys` | 本人 | 登録パスキーのID・名前・登録日時を取得 |
+| `POST /me/passkeys/options` | 本人 | 再認証後、追加登録チャレンジを発行 |
+| `POST /me/passkeys/verify` | 本人 | 登録応答を検証し、パスキーを追加 |
+| `DELETE /me/passkeys/{credentialId}` | 本人 | 再認証後、パスキーを削除。最後の1件は409 |
 | `GET /me` | 本人 | アカウント情報を取得 |
 | `PATCH /me` | 本人 | 表示名を更新 |
-| `DELETE /me` | 本人 | パスワードで再認証し、退会 |
+| `DELETE /me` | 本人 | パスキーで再認証し、退会 |
 | `POST /me/device` | 本人 | 端末IDと送信用トークンを発行 |
 | `GET /me/device` | 本人 | 登録端末を取得 |
-| `POST /me/device/token` | 本人 | パスワードで再認証し、送信用トークンを再発行 |
+| `POST /me/device/token` | 本人 | パスキーで再認証し、送信用トークンを再発行 |
 | `POST /telemetry/batches` | 端末 | 走行情報と計測値を一括保存 |
 | `GET /trips` | 本人 | 走行一覧を取得 |
 | `GET /trips/{tripId}` | 本人 | 走行概要を取得 |
@@ -78,13 +85,21 @@ OBD2記録端末 ─ HTTPS / JSON ──┘       │
 
 ## 認証
 
-- メール・パスワードで認証し、パスワードはBCryptでハッシュ化する。
+- ユーザー認証はパスキーのみ。メールは識別情報として保存し、メールの所有確認や認証・復旧には使用しない。
+- 登録時にランダムなユーザーIDを発行し、WebAuthnの`user.id`として使用する。登録成功時にユーザーとパスキーを同一トランザクションで保存する。既存メールへの登録でアカウントを上書き・統合しない。
+- チャレンジは暗号学的乱数で生成し、5分有効・1回限りとする。用途・対象ユーザー・セッションに紐付け、検証成功時に原子的に消費する。登録中のメール・表示名はチャレンジに紐付け、有効期限後に破棄する。
+- 登録・認証時はチャレンジ、処理種別、許可したOrigin、RP ID、ユーザー確認（UV）を検証する。認証時は保存済み公開鍵で署名を検証し、credential IDとuserHandleが同じユーザーを指すことを確認する。Discoverable Credentialと`userVerification: required`を使用する。
+- サーバーは公開鍵を保存し、秘密鍵・生体情報は取得しない。署名カウンターは同期パスキーで増加しない場合も考慮し、カウンターだけで一律に拒否しない。
 - ユーザートークンは有効期限30日とし、DBにはハッシュのみ保存する。iPhoneではKeychainに保存する。
+- 再認証は現在のユーザーのパスキーで行う。再認証トークンは5分有効・1回限りとし、セッション・操作・対象IDに紐付ける。退会、端末トークン再発行、パスキー追加・削除で検証・消費する。
+- パスキーは複数登録できる。最後の1件の削除は同時操作時も拒否し、削除時は全ユーザーセッションを失効する。すべてのパスキーを失った場合、パスキー提供元での復元を利用する。
 - 端末トークンはデータ送信専用とし、再発行時に旧トークンを無効化する。
-- 全てのデータ操作でユーザーと端末・走行の所有関係を確認する。
-- パスワード再設定トークンは30分有効・1回限りとし、登録メールの有無を応答で明かさない。
-- 認証関連APIに回数制限を設ける。DB・メールの認証情報は環境変数で管理する。
+- 全てのデータ操作で所有関係を確認する。認証関連APIに回数制限を設け、DB認証情報は環境変数で管理する。
 
-## 外部サービス
+検証は[WebAuthn仕様](https://www.w3.org/TR/webauthn-3/)に従う。
 
-パスワード再設定メールの送信にSMTPを使用する。
+## 外部サービス・iPhone連携
+
+認証用のメール配信サービスは使用しない。iPhoneはAuthenticationServicesでパスキーを作成・使用する。
+
+RP IDとなるドメインで`/.well-known/apple-app-site-association`を公開し、`webcredentials`にアプリIDを登録する。iPhone側には対応するAssociated Domainsを設定する。RP ID・許可Originはサーバー設定で固定し、実機での認証確認にはHTTPSドメインとアプリの関連付けを用意する。[Appleのパスキー連携資料](https://developer.apple.com/documentation/authenticationservices/connecting-to-a-service-with-passkeys)

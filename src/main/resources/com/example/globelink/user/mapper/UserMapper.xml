@@ -16,4 +16,17 @@
         WHERE id = #{id}
     </select>
 
+    <!-- ユーザー登録　-->
+    <insert id="registerUser">
+        INSERT INTO
+            users (
+                email
+                , display_name
+            )
+            VALUES (
+                #{email}
+                , #{displayName}
+            )
+    </insert>
+
 </mapper>

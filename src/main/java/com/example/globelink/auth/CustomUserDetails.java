@@ -7,12 +7,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.example.globelink.user.entity.User;
 
-public class LoginUserDetails implements UserDetails {
+public class CustomUserDetails implements UserDetails {
     private final String email;
     private final String displayName;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public LoginUserDetails(User user){
+    public CustomUserDetails(User user){
         this.email = user.getEmail();
         this.displayName = user.getDisplayName();
         this.authorities = java.util.List.of();

@@ -10,7 +10,7 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService(){
-        UserDetails user = User
+        CustomUserDetails user = User
         .withUserUsename("example")
         .roles("USER")
         .build();

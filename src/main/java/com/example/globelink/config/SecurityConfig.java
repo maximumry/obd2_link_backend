@@ -9,6 +9,11 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
+    public UserDetailsManager userDetailsManager(){
+        return new 
+    }
+
+    @Bean
     public UserDetailsService userDetailsService(){
         CustomUserDetails user = User
         .withUserUsename("example")

@@ -9,26 +9,14 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public UserDetailsManager userDetailsManager(){
-        return new 
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService(){
-        CustomUserDetails user = User
-        .withUserUsename("example")
-        .roles("USER")
-        .build();
-        return new InMemoryUserDetailsManager(user);
-    }
-
-    @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
-        http.formLogin(login -> login
-            .permitAll())
-            .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/").permitAll()
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/register").permitAll()
                 .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .permitAll()
             );
         return http.build();
     }

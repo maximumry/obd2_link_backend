@@ -1,4 +1,4 @@
-package com.example.globelink.user.entity;
+package com.example.globelink.user.model.entity;
 
 import java.time.Instant;
 

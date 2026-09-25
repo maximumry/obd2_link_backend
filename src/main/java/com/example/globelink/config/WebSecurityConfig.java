@@ -1,15 +1,15 @@
-package com.example.globelink.config;
+// package com.example.globelink.config;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+// import org.springframework.context.annotation.Bean;
+// import org.springframework.context.annotation.Configuration;
 
-@Configuration 
-public class WebSecurityConfig {
+// @Configuration 
+// public class WebSecurityConfig {
 
-    @Bean
-    public UserDetailsService userDetailsService(){
-        // ユーザーオブジェクト作成
-        UserDetails user = User.withUser
-    }
+//     @Bean
+//     public UserDetailsService userDetailsService(){
+//         // ユーザーオブジェクト作成
+//         UserDetails user = User.withUser
+//     }
     
-}
+// }

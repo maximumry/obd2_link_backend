@@ -1,5 +1,6 @@
 package com.example.globelink.user.controller;
 
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,7 +19,7 @@ public class RegistrationController {
 
     @PostMapping("/options")
     public void registerUser(@RequestBody UserReqDto userReqDto){
-        registrationService.registerUser(userReqDto.;
+        registrationService.registerUser(userReqDto);
     }
     
 }

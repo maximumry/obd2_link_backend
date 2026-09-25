@@ -6,7 +6,7 @@
 <mapper namespace="com.example.globelink.user.mapper.UserMapper">
 
     <!-- 1件取得 -->
-    <select id="getUser" resultType="com.example.globelink.user.dto.UserResponse">
+    <select id="getUser" resultType="com.example.globelink.user.dto.UserReqDto">
         SELECT
             id
             , email

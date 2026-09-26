@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.globelink.user.model.dto.request.UserReqDto;
 import com.example.globelink.user.service.RegistrationService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -18,7 +19,7 @@ public class RegistrationController {
     private final RegistrationService registrationService;
 
     @PostMapping("/options")
-    public void registerUser(@RequestBody UserReqDto userReqDto){
+    public void registerUser(@Valid @RequestBody UserReqDto userReqDto){
         registrationService.registerUser(userReqDto);
     }
     

@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>globelink</artifactId>
+	<artifactId>obd2-link-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>globelink</name>
+	<name>obd2-link-backend</name>
 	<description/>
 	<url/>
 	<licenses>

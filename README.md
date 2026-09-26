@@ -1,4 +1,4 @@
-# OBD2 Link Backend
+# obd2-link-backend
 
 ## プロジェクト概要
 
@@ -23,11 +23,13 @@ iPhoneアプリで、自分の走行履歴と1回分のOBD2データを確認す
 1. ルートに`.env`を用意します。既存ファイルがある場合は内容を確認して利用してください（Git管理対象外）。
 
    ```dotenv
-   POSTGRES_DB=globelink_dev_db
-   POSTGRES_USER=globelink
+   POSTGRES_DB=obd2-link-backend
+   POSTGRES_USER=obd2-link-backend
    POSTGRES_PASSWORD=replace-with-local-password
    POSTGRES_PORT=5432
    ```
+
+既存のPostgreSQLボリュームを利用する場合、`.env`を変更してもDB名・ユーザー名は自動変更されません。既存DBに合わせて接続情報を指定するか、DB名・ユーザー名を別途移行してください。
 
 2. DBを起動します。
 
@@ -38,8 +40,8 @@ iPhoneアプリで、自分の走行履歴と1回分のOBD2データを確認す
 3. 同じDB接続情報を環境変数に指定して起動します。`.env`はCompose用で、Spring Bootには自動では読み込まれません。
 
    ```sh
-   export SPRING_DATASOURCE_URL='jdbc:postgresql://localhost:5432/globelink_dev_db'
-   export SPRING_DATASOURCE_USERNAME='globelink'
+   export SPRING_DATASOURCE_URL='jdbc:postgresql://localhost:5432/obd2-link-backend'
+   export SPRING_DATASOURCE_USERNAME='obd2-link-backend'
    export SPRING_DATASOURCE_PASSWORD='replace-with-local-password'
    ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
    ```

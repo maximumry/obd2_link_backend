@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.obd2linkbackend.passkey.service.WebAuthnService;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
 import com.example.obd2linkbackend.user.service.RegistrationService;
 
@@ -17,9 +18,11 @@ import lombok.RequiredArgsConstructor;
 public class RegistrationController {
 
     private final RegistrationService registrationService;
+    private final WebAuthnService webAuthnService;
 
     @PostMapping("/options")
     public void registerUser(@Valid @RequestBody UserReqDto userReqDto){
+        
         registrationService.registerUser(userReqDto);
     }
     

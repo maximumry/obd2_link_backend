@@ -5,7 +5,7 @@ import java.time.Instant;
 import lombok.Data;
 
 @Data 
-public class User {
+public class UserEntity {
 
     /**
      * ユーザーID

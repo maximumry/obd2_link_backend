@@ -22,7 +22,7 @@ public class RegistrationController {
 
     @PostMapping("/options")
     public void registerUser(@Valid @RequestBody UserReqDto userReqDto){
-        
+        webAuthnService.generateRegistrationChallenge(UserReqDto dto);
         registrationService.registerUser(userReqDto);
     }
     

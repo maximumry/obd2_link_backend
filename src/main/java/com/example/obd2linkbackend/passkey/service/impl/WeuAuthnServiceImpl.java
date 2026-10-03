@@ -44,7 +44,7 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
         // ユーザーにパスキー登録してもらう時のサーバー側情報を定義
         PublicKeyCredentialRpEntity rp = new PublicKeyCredentialRpEntity("localhost", "OBD2 Link");
 
-        // サーバー側、公開鍵、ユーザー、チャレンジの4つの情報をまとめたオブジェクト
+        // サーバー側、公開鍵、ユーザー、チャレンジの4つの情報をまとめたオブジェクトをコントローラーへレスポンス
         return new PublicKeyCredentialCreationOptions(rp, user, challenge, pubKeyCredParams);
     }
     

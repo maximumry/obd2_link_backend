@@ -10,6 +10,6 @@ import jakarta.transaction.Transactional;
 public interface RegistrationService {
 
     @Transactional 
-    public void registerUser(UserReqDto userReqDto1);
+    public void registerUser(UserReqDto dto);
     
 }

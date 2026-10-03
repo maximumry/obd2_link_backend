@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.obd2linkbackend.passkey.service.WebAuthnService;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
 import com.example.obd2linkbackend.user.service.RegistrationService;
+import com.webauthn4j.data.PublicKeyCredentialCreationOptions;
 
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -21,9 +23,10 @@ public class RegistrationController {
     private final WebAuthnService webAuthnService;
 
     @PostMapping("/options")
-    public void registerUser(@Valid @RequestBody UserReqDto userReqDto){
-        webAuthnService.generateRegistrationChallenge(UserReqDto dto);
+    public PublicKeyCredentialCreationOptions registerUser(@Valid @RequestBody UserReqDto userReqDto, HttpSession session){
+        PublicKeyCredentialCreationOptions options = webAuthnService.generateRegistrationChallenge(userReqDto, session);
         registrationService.registerUser(userReqDto);
+        return options;
     }
     
 }

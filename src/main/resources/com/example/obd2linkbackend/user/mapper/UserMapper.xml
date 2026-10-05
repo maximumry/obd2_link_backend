@@ -17,7 +17,7 @@
     </select>
 
     <!-- ユーザー登録　-->
-    <insert id="registerUser">
+    <insert id="registerUser" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         INSERT INTO
             users (
                 email

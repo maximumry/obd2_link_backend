@@ -9,6 +9,11 @@ import lombok.Data;
 public class UserReqDto {
 
     /**
+     * ユーザーID(PrimaryKey)
+     */
+    private Long id;
+
+    /**
      * メールアドレス
      */
     @NotBlank(message = "メールアドレスは必須です")

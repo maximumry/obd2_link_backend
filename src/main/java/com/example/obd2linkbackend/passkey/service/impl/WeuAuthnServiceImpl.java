@@ -2,6 +2,7 @@ package com.example.obd2linkbackend.passkey.service.impl;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Base64;
 
 import org.springframework.stereotype.Service;
 
@@ -49,8 +50,20 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
         // ユーザーにパスキー登録してもらう時のサーバー側情報を定義
         PublicKeyCredentialRpEntity rp = new PublicKeyCredentialRpEntity("localhost", "OBD2 Link");
 
+        /**
+         * のちにチャレンジが成功してるか検証のために、チャレンジとuserIdをDBへ保存
+         * そのためにBase64URLへ変換
+         */
+        bytesToEncode(userIdBytes);
+        bytesToEncode(challengeBytes);
+
         // サーバー側、公開鍵、ユーザー、チャレンジの4つの情報をまとめたオブジェクトをコントローラーへレスポンス
         return new PublicKeyCredentialCreationOptions(rp, user, challenge, pubKeyCredParams);
     }
     
+    private String bytesToEncode(byte[] bytes){
+        return Base64.getUrlEncoder()
+            .withoutPadding()
+            .encodeToString(bytes);
+    }
 }

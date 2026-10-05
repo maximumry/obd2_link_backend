@@ -1,5 +1,6 @@
 package com.example.obd2linkbackend.passkey.service.impl;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -33,8 +34,12 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
         // 後で検証するため、チャレンジを一時保存
         session.setAttribute("webauthn_challenge", challenge);
 
-        // パスキー登録時に端末へ渡すユーザー情報を作成
-        PublicKeyCredentialUserEntity user = new PublicKeyCredentialUserEntity(challengeBytes, userReqDto.getEmail(), userReqDto.getDisplayName());
+        /**
+         * パスキー登録時に端末へ渡すユーザー情報を作成
+         * コンストラクターの第一引数はbyteの配列指定のため変換してる
+        **/
+        byte[] userIdBytes = ByteBuffer.allocate(4).putLong(userReqDto.getId()).array();
+        PublicKeyCredentialUserEntity user = new PublicKeyCredentialUserEntity(userIdBytes, userReqDto.getEmail(), userReqDto.getDisplayName());
 
         // クライアントが使用する公開鍵の種類の指定と、アルゴリズムを指定
         List<PublicKeyCredentialParameters> pubKeyCredParams = List.of(new PublicKeyCredentialParameters(

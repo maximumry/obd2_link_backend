@@ -1,6 +1,7 @@
 package com.example.obd2linkbackend.passkey.service.impl;
 
 import java.nio.ByteBuffer;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Base64;
 
@@ -37,9 +38,10 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
 
         /**
          * パスキー登録時に端末へ渡すユーザー情報を作成
-         * コンストラクターの第一引数はbyteの配列指定のため変換してる
+         * コンストラクターの第一引数はbyteの配列指定のため、バイト配列のIDを生成
         **/
-        byte[] userIdBytes = ByteBuffer.allocate(Long.BYTES).putLong(userReqDto.getId()).array();
+        byte[] userIdBytes = new byte[32];
+        new SecureRandom().nextBytes(userIdBytes);
         PublicKeyCredentialUserEntity user = new PublicKeyCredentialUserEntity(userIdBytes, userReqDto.getEmail(), userReqDto.getDisplayName());
 
         // クライアントが使用する公開鍵の種類の指定と、アルゴリズムを指定

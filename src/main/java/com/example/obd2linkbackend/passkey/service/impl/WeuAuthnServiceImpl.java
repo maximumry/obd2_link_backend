@@ -39,7 +39,7 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
          * パスキー登録時に端末へ渡すユーザー情報を作成
          * コンストラクターの第一引数はbyteの配列指定のため変換してる
         **/
-        byte[] userIdBytes = ByteBuffer.allocate(4).putLong(userReqDto.getId()).array();
+        byte[] userIdBytes = ByteBuffer.allocate(Long.BYTES).putLong(userReqDto.getId()).array();
         PublicKeyCredentialUserEntity user = new PublicKeyCredentialUserEntity(userIdBytes, userReqDto.getEmail(), userReqDto.getDisplayName());
 
         // クライアントが使用する公開鍵の種類の指定と、アルゴリズムを指定
@@ -50,17 +50,11 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
         // ユーザーにパスキー登録してもらう時のサーバー側情報を定義
         PublicKeyCredentialRpEntity rp = new PublicKeyCredentialRpEntity("localhost", "OBD2 Link");
 
-        /**
-         * のちにチャレンジが成功してるか検証のために、チャレンジとuserIdをDBへ保存
-         * そのためにBase64URLへ変換
-         */
-        bytesToEncode(userIdBytes);
-        bytesToEncode(challengeBytes);
-
         // サーバー側、公開鍵、ユーザー、チャレンジの4つの情報をまとめたオブジェクトをコントローラーへレスポンス
         return new PublicKeyCredentialCreationOptions(rp, user, challenge, pubKeyCredParams);
     }
     
+    // ユーザーへJSONでレスポンスするためにBase64URLに変換するメソッド
     private String bytesToEncode(byte[] bytes){
         return Base64.getUrlEncoder()
             .withoutPadding()

@@ -2,13 +2,20 @@ package com.example.obd2linkbackend.passkey.service.impl;
 
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Base64;
 
 import org.springframework.stereotype.Service;
 
+import com.example.obd2linkbackend.passkey.mapper.AuthChallengeMapper;
+import com.example.obd2linkbackend.passkey.model.entity.AuthChallengeEntity;
+import com.example.obd2linkbackend.passkey.model.enums.ChallengePurpose;
 import com.example.obd2linkbackend.passkey.service.WebAuthnService;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ser.std.StdKeySerializers.Default;
 import com.webauthn4j.data.PublicKeyCredentialCreationOptions;
 import com.webauthn4j.data.PublicKeyCredentialParameters;
@@ -26,6 +33,9 @@ import lombok.RequiredArgsConstructor;
 @Service 
 @RequiredArgsConstructor 
 public class WeuAuthnServiceImpl implements WebAuthnService{
+
+    private final ObjectMapper objectMapper;
+    private final AuthChallengeMapper authChallengeMapper;
 
     @Transactional 
     public PublicKeyCredentialCreationOptions generateRegistrationChallenge(UserReqDto userReqDto, HttpSession session){
@@ -52,14 +62,17 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
         // ユーザーにパスキー登録してもらう時のサーバー側情報を定義
         PublicKeyCredentialRpEntity rp = new PublicKeyCredentialRpEntity("localhost", "OBD2 Link");
 
+        // チャレンジをDBへ保存
+        // 引数の「registrationData」はDBへJSONで保存したいための処理
+        try{
+            Instant now = Instant.now();
+            AuthChallengeEntity entity = AuthChallengeEntity.create(userIdBytes, challengeBytes, ChallengePurpose.REGISTRATION, objectMapper.writeValueAsString(userReqDto), now.plus(Duration.ofMinutes(5)));
+            authChallengeMapper.insertChallenge(entity);
+        }catch(JsonProcessingException e){
+            throw new RuntimeException(e);
+        }
+
         // サーバー側、公開鍵、ユーザー、チャレンジの4つの情報をまとめたオブジェクトをコントローラーへレスポンス
         return new PublicKeyCredentialCreationOptions(rp, user, challenge, pubKeyCredParams);
-    }
-    
-    // ユーザーへJSONでレスポンスするためにBase64URLに変換するメソッド
-    private String bytesToEncode(byte[] bytes){
-        return Base64.getUrlEncoder()
-            .withoutPadding()
-            .encodeToString(bytes);
     }
 }

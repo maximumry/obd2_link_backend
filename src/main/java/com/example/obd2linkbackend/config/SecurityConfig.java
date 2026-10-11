@@ -16,11 +16,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/register/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .csrf(csrf -> csrf
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()
-    )
-            )
+            .csrf(csrf -> csrf.disable())
             .formLogin(form -> form
                 .permitAll()
             );

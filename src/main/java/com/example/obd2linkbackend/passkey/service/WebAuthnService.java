@@ -10,4 +10,7 @@ public interface WebAuthnService {
 
     @Transactional 
     PublicKeyCredentialCreationOptions generateRegistrationChallenge(UserReqDto dto, HttpSession session);
+
+    @Transactional 
+    void verifyChallenge(ChallengeReqDto dto, HttpSession session);
 }

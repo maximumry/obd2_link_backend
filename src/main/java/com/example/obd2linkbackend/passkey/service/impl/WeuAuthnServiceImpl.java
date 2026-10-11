@@ -75,4 +75,9 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
         // サーバー側、公開鍵、ユーザー、チャレンジの4つの情報をまとめたオブジェクトをコントローラーへレスポンス
         return new PublicKeyCredentialCreationOptions(rp, user, challenge, pubKeyCredParams);
     }
+
+    @Transactional 
+    public void verifyChallenge(ChallengeReqDto dto, HttpSession session){
+        
+    }
 }

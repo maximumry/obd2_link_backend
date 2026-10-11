@@ -23,9 +23,14 @@ public class RegistrationController {
     private final WebAuthnService webAuthnService;
 
     @PostMapping("/options")
-    public PublicKeyCredentialCreationOptions registerUser(@Valid @RequestBody UserReqDto userReqDto, HttpSession session){
+    public PublicKeyCredentialCreationOptions generateRegistrationOptions(@Valid @RequestBody UserReqDto userReqDto, HttpSession session){
         PublicKeyCredentialCreationOptions options = webAuthnService.generateRegistrationChallenge(userReqDto, session);
         return options;
+    }
+
+    @PostMapping("/verify")
+    public void registerUser(@Valid @RequestBody ChallengeReqDto dto, HttpSession session){
+        webAuthnService.verifyChallenge(dto, session);
     }
     
 }

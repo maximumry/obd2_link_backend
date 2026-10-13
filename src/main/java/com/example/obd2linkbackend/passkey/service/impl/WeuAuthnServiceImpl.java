@@ -1,5 +1,6 @@
 package com.example.obd2linkbackend.passkey.service.impl;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -11,10 +12,12 @@ import org.springframework.stereotype.Service;
 
 import com.example.obd2linkbackend.passkey.mapper.AuthChallengeMapper;
 import com.example.obd2linkbackend.passkey.model.entity.AuthChallengeEntity;
+import com.example.obd2linkbackend.passkey.model.dto.request.ChallengeReqDto;
 import com.example.obd2linkbackend.passkey.model.enums.ChallengePurpose;
 import com.example.obd2linkbackend.passkey.service.WebAuthnService;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ser.std.StdKeySerializers.Default;
 import com.webauthn4j.data.PublicKeyCredentialCreationOptions;
@@ -76,8 +79,22 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
         return new PublicKeyCredentialCreationOptions(rp, user, challenge, pubKeyCredParams);
     }
 
-    @Transactional 
+    @Transactional
     public void verifyChallenge(ChallengeReqDto dto, HttpSession session){
-        
+        // clientDataJSONからチャレンジを取り出す
+        byte[] challengeBytes;
+        try{
+            byte[] clientDataJson = Base64.getUrlDecoder().decode(dto.getResponse().getClientDataJSON());
+            JsonNode clientData = objectMapper.readTree(clientDataJson);
+            challengeBytes = Base64.getUrlDecoder().decode(clientData.get("challenge").asText());
+        }catch(IOException e){
+            throw new IllegalArgumentException("clientDataJSONの形式が正しくありません", e);
+        }
+
+        // DBから未期限切れのチャレンジを取得
+        AuthChallengeEntity challenge = authChallengeMapper.selectChallenge(challengeBytes, ChallengePurpose.REGISTRATION);
+        if(challenge == null){
+            throw new IllegalArgumentException("チャレンジが見つからないか、期限切れです");
+        }
     }
 }

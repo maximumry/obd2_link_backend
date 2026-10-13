@@ -1,5 +1,6 @@
 package com.example.obd2linkbackend.passkey.service;
 
+import com.example.obd2linkbackend.passkey.model.dto.request.ChallengeReqDto;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
 import com.webauthn4j.data.PublicKeyCredentialCreationOptions;
 

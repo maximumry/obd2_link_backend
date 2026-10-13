@@ -24,4 +24,19 @@
             )
     </insert>
 
+    <!-- チャレンジ取得（未期限切れのもの） -->
+    <select id="selectChallenge" resultType="com.example.obd2linkbackend.passkey.model.entity.AuthChallengeEntity">
+        SELECT
+            id,
+            user_id AS userId,
+            challenge,
+            purpose,
+            registration_data AS registrationData,
+            expires_at AS expiresAt
+        FROM auth_challenges
+        WHERE challenge = #{challenge}
+          AND purpose = #{purpose}
+          AND expires_at > now()
+    </select>
+
 </mapper>

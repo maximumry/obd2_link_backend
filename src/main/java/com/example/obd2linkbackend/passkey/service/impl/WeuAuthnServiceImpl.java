@@ -9,8 +9,11 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Base64;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.example.obd2linkbackend.passkey.exception.ChallengeVerificationException;
 import com.example.obd2linkbackend.passkey.mapper.AuthChallengeMapper;
 import com.example.obd2linkbackend.passkey.model.entity.AuthChallengeEntity;
 import com.example.obd2linkbackend.passkey.model.dto.request.ChallengeReqDto;
@@ -91,18 +94,18 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
         }catch(IOException e){
             throw new IllegalArgumentException("clientDataJSONの形式が正しくありません", e);
         }
-
+        
         // DBから未期限切れのチャレンジを取得
         AuthChallengeEntity challenge = authChallengeMapper.selectChallenge(challengeBytes, ChallengePurpose.REGISTRATION);
         if(challenge == null){
-            throw new IllegalArgumentException("チャレンジが見つからないか、期限切れです");
+            throw new ChallengeVerificationException("チャレンジが見つからないか、期限切れです");
         }
-
+        
         // サーバーで生成したチャレンジと、クライアント側のチャレンジを検証
         Challenge serverChallenge = new DefaultChallenge(challenge.getChallenge());
         boolean matched = MessageDigest.isEqual(challengeBytes, serverChallenge.getValue());
         if(!matched){
-            throw new IllegalStateException();
+            throw new ChallengeVerificationException("チャレンジが一致しません");
         }
     }
 }

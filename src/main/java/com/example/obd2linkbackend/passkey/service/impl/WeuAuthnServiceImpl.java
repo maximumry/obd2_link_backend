@@ -2,6 +2,7 @@ package com.example.obd2linkbackend.passkey.service.impl;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
@@ -95,6 +96,13 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
         AuthChallengeEntity challenge = authChallengeMapper.selectChallenge(challengeBytes, ChallengePurpose.REGISTRATION);
         if(challenge == null){
             throw new IllegalArgumentException("チャレンジが見つからないか、期限切れです");
+        }
+
+        // サーバーで生成したチャレンジと、クライアント側のチャレンジを検証
+        Challenge serverChallenge = new DefaultChallenge(challenge.getChallenge());
+        boolean matched = MessageDigest.isEqual(challengeBytes, serverChallenge.getValue());
+        if(!matched){
+            throw new IllegalStateException();
         }
     }
 }

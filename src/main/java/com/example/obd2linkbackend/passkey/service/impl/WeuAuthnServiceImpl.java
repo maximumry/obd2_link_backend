@@ -28,10 +28,15 @@ import com.webauthn4j.data.PublicKeyCredentialCreationOptions;
 import com.webauthn4j.data.PublicKeyCredentialParameters;
 import com.webauthn4j.data.PublicKeyCredentialRpEntity;
 import com.webauthn4j.data.PublicKeyCredentialType;
+import com.webauthn4j.data.client.Origin;
 import com.webauthn4j.data.client.challenge.Challenge;
 import com.webauthn4j.data.client.challenge.DefaultChallenge;
+import com.webauthn4j.server.ServerProperty;
 import com.webauthn4j.data.PublicKeyCredentialUserEntity;
+import com.webauthn4j.data.RegistrationData;
+import com.webauthn4j.data.RegistrationParameters;
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier;
+import com.webauthn4j.WebAuthnManager;
 
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
@@ -43,6 +48,13 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
 
     private final ObjectMapper objectMapper;
     private final AuthChallengeMapper authChallengeMapper;
+
+    // クライアントが使用する公開鍵の種類の指定と、アルゴリズムを指定
+    private static final List<PublicKeyCredentialParameters> PUB_KEY_CRED_PATAMS =
+        List.of(new PublicKeyCredentialParameters(
+            PublicKeyCredentialType.PUBLIC_KEY,
+            COSEAlgorithmIdentifier.ES256
+        ));
 
     @Transactional 
     public PublicKeyCredentialCreationOptions generateRegistrationChallenge(UserReqDto userReqDto, HttpSession session){
@@ -61,11 +73,6 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
         new SecureRandom().nextBytes(userIdBytes);
         PublicKeyCredentialUserEntity user = new PublicKeyCredentialUserEntity(userIdBytes, userReqDto.getEmail(), userReqDto.getDisplayName());
 
-        // クライアントが使用する公開鍵の種類の指定と、アルゴリズムを指定
-        List<PublicKeyCredentialParameters> pubKeyCredParams = List.of(new PublicKeyCredentialParameters(
-            PublicKeyCredentialType.PUBLIC_KEY,
-            COSEAlgorithmIdentifier.ES256));
-
         // ユーザーにパスキー登録してもらう時のサーバー側情報を定義
         PublicKeyCredentialRpEntity rp = new PublicKeyCredentialRpEntity("localhost", "OBD2 Link");
 
@@ -80,7 +87,7 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
         }
 
         // サーバー側、公開鍵、ユーザー、チャレンジの4つの情報をまとめたオブジェクトをコントローラーへレスポンス
-        return new PublicKeyCredentialCreationOptions(rp, user, challenge, pubKeyCredParams);
+        return new PublicKeyCredentialCreationOptions(rp, user, challenge, PUB_KEY_CRED_PATAMS);
     }
 
     @Transactional
@@ -102,10 +109,30 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
         }
         
         // サーバーで生成したチャレンジと、クライアント側のチャレンジを検証
+        WebAuthnManager webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager();
+
+        // ユーザー端末から受け取ったチャレンジ含むJSONを解析
+        RegistrationData RegistrationData = webAuthnManager.parseRegistrationResponseJSON(registrationResponseJSON);
+
+        // サーバー側の検証条件作成
+        ServerProperty serverProperty = new ServerProperty(
+            new Origin("https://example.com"),
+            "example.com",
+            new DefaultChallenge(challenge.getChallenge())
+        );
+
+        RegistrationParameters registrationParameters = new RegistrationParameters(
+            serverProperty,
+            PUB_KEY_CRED_PATAMS,
+            true, // 生体認証を必須に
+            true); // ユーザー操作を必須
+            
         Challenge serverChallenge = new DefaultChallenge(challenge.getChallenge());
         boolean matched = MessageDigest.isEqual(challengeBytes, serverChallenge.getValue());
         if(!matched){
             throw new ChallengeVerificationException("チャレンジが一致しません");
         }
+
+        // 
     }
 }

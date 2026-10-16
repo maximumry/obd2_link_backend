@@ -5,7 +5,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.obd2linkbackend.passkey.model.dto.request.ChallengeReqDto;
 import com.example.obd2linkbackend.passkey.service.WebAuthnService;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
 import com.example.obd2linkbackend.user.service.RegistrationService;
@@ -30,8 +29,8 @@ public class RegistrationController {
     }
 
     @PostMapping("/verify")
-    public void registerUser(@Valid @RequestBody ChallengeReqDto dto, HttpSession session){
-        webAuthnService.verifyChallenge(dto, session);
+    public void registerUser(@RequestBody String registrationResponseJSON, HttpSession session){
+        webAuthnService.verifyChallenge(registrationResponseJSON, session);
     }
     
 }

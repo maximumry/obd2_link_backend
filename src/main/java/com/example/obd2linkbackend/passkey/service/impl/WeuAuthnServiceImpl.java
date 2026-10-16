@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import com.example.obd2linkbackend.passkey.exception.ChallengeVerificationException;
 import com.example.obd2linkbackend.passkey.mapper.AuthChallengeMapper;
 import com.example.obd2linkbackend.passkey.model.entity.AuthChallengeEntity;
-import com.example.obd2linkbackend.passkey.model.dto.request.ChallengeReqDto;
 import com.example.obd2linkbackend.passkey.model.enums.ChallengePurpose;
 import com.example.obd2linkbackend.passkey.service.WebAuthnService;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
@@ -91,11 +90,13 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
     }
 
     @Transactional
-    public void verifyChallenge(ChallengeReqDto dto, HttpSession session){
+    public void verifyChallenge(String registrationResponseJSON, HttpSession session){
         // clientDataJSONからチャレンジを取り出す
         byte[] challengeBytes;
         try{
-            byte[] clientDataJson = Base64.getUrlDecoder().decode(dto.getResponse().getClientDataJSON());
+            JsonNode registrationResponse = objectMapper.readTree(registrationResponseJSON);
+            byte[] clientDataJson = Base64.getUrlDecoder().decode(
+                registrationResponse.get("response").get("clientDataJSON").asText());
             JsonNode clientData = objectMapper.readTree(clientDataJson);
             challengeBytes = Base64.getUrlDecoder().decode(clientData.get("challenge").asText());
         }catch(IOException e){

@@ -3,6 +3,8 @@ package com.example.obd2linkbackend.common;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.example.obd2linkbackend.passkey.exception.ChallengeVerificationException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -32,6 +34,6 @@ public class GlobalExceptionHandler {
     
     @ExceptionHandler(ChallengeVerificationException.class)
     public ResponseEntity<Void> handlerChallengeVerification(ChallengeVerificationException ex){
-        return ResponseEntity.status(HttpStatus.CONFLICT);
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }
 }

@@ -31,6 +31,7 @@ import com.webauthn4j.data.client.Origin;
 import com.webauthn4j.data.client.challenge.Challenge;
 import com.webauthn4j.data.client.challenge.DefaultChallenge;
 import com.webauthn4j.server.ServerProperty;
+import com.webauthn4j.verifier.exception.VerificationException;
 import com.webauthn4j.data.PublicKeyCredentialUserEntity;
 import com.webauthn4j.data.RegistrationData;
 import com.webauthn4j.data.RegistrationParameters;
@@ -113,7 +114,7 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
         WebAuthnManager webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager();
 
         // ユーザー端末から受け取ったチャレンジ含むJSONを解析
-        RegistrationData RegistrationData = webAuthnManager.parseRegistrationResponseJSON(registrationResponseJSON);
+        RegistrationData registrationData = webAuthnManager.parseRegistrationResponseJSON(registrationResponseJSON);
 
         // サーバー側の検証条件作成
         ServerProperty serverProperty = new ServerProperty(
@@ -127,13 +128,13 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
             PUB_KEY_CRED_PATAMS,
             true, // 生体認証を必須に
             true); // ユーザー操作を必須
-            
-        Challenge serverChallenge = new DefaultChallenge(challenge.getChallenge());
-        boolean matched = MessageDigest.isEqual(challengeBytes, serverChallenge.getValue());
-        if(!matched){
-            throw new ChallengeVerificationException("チャレンジが一致しません");
+        
+        // ユーザーから届いたwebauthnとサーバーで保存してあるチャレンジを検証
+        try{
+            webAuthnManager.verify(registrationData, registrationParameters);
+        }catch(VerificationException ex){
+            throw new ChallengeVerificationException("パスキーが正しくありません");
         }
-
-        // 
+        
     }
 }

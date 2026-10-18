@@ -32,19 +32,19 @@ public class AuthChallengeEntity {
     /**
      * 登録時のユーザー情報
      */
-    private String registrationData;
+    private String pendingUserData;
 
     /**
      * 有効期限(５分設定)
      */
     private Instant expiresAt;
 
-    public static AuthChallengeEntity create(byte[] userId, byte[] challenge, ChallengePurpose purpose, String registrationData, Instant expiresAt){
+    public static AuthChallengeEntity create(byte[] userId, byte[] challenge, ChallengePurpose purpose, String pendingUserData, Instant expiresAt){
         AuthChallengeEntity entity = new AuthChallengeEntity();
         entity.userId = userId;
         entity.challenge = challenge;
         entity.purpose = purpose;
-        entity.registrationData = registrationData;
+        entity.pendingUserData = pendingUserData;
         entity.expiresAt = expiresAt;
         return  entity;
     }

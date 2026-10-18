@@ -27,5 +27,12 @@ public class UserEntity {
      * 作成日時
      */
     private Instant createdAt;
+
+    public static UserEntity create(String email, String displayName){
+        UserEntity entity = new UserEntity();
+        entity.email = email;
+        entity.displayName = displayName;
+        return entity;
+    }
     
 }

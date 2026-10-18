@@ -18,7 +18,9 @@ import com.example.obd2linkbackend.passkey.mapper.AuthChallengeMapper;
 import com.example.obd2linkbackend.passkey.model.entity.AuthChallengeEntity;
 import com.example.obd2linkbackend.passkey.model.enums.ChallengePurpose;
 import com.example.obd2linkbackend.passkey.service.WebAuthnService;
+import com.example.obd2linkbackend.user.mapper.UserMapper;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
+import com.example.obd2linkbackend.user.model.entity.UserEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,6 +50,7 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
 
     private final ObjectMapper objectMapper;
     private final AuthChallengeMapper authChallengeMapper;
+    private final UserMapper userMapper;
 
     // クライアントが使用する公開鍵の種類の指定と、アルゴリズムを指定
     private static final List<PublicKeyCredentialParameters> PUB_KEY_CRED_PATAMS =
@@ -129,13 +132,21 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
             true, // 生体認証を必須に
             true); // ユーザー操作を必須
         
-        // ユーザーから届いたwebauthnとサーバーで保存してあるチャレンジを検証
         try{
+            // ユーザーから届いたwebauthnとサーバーで保存してあるチャレンジを検証
             webAuthnManager.verify(registrationData, registrationParameters);
             authChallengeMapper.deleteChallenge(challenge.getUserId());
+
+            // 検証に成功したので、usersテーブルへユーザー情報を保存
+            UserReqDto userReqDto = objectMapper.readValue(challenge.getPendingUserData(), UserReqDto.class);
+            UserEntity userEntity = UserEntity.create(userReqDto.getEmail(), userReqDto.getDisplayName());
+            userMapper.registerUser(userEntity);
         }catch(VerificationException ex){
+            // 検証に失敗した場合の例外処理
             throw new ChallengeVerificationException("パスキーが正しくありません");
+        }catch(JsonProcessingException ex){
+            // ユーザー情報が存在しなかった場合の例外処理
+            throw new RuntimeException("ユーザー登録に失敗しました");
         }
-        
     }
 }

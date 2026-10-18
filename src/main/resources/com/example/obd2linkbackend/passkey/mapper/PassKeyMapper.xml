@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.obd2linkbackend.passkey.mapper.PassKeysMapper">
+
+    <!-- パスキー登録　-->
+    <insert id="registerPassKey">
+        INSERT INTO
+            passkeys (
+                credential_id
+                , user_id
+                , public_key
+                , sign_count
+                , name
+            )
+            VALUES (
+                #{credentialId}
+                , #{userId}
+                , #{publicKey}
+                , #{signCount}
+                , #{name}
+            )
+    </insert>
+
+</mapper>

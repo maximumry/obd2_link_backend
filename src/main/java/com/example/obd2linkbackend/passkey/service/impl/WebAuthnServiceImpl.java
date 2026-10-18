@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 
 import com.example.obd2linkbackend.passkey.exception.ChallengeVerificationException;
 import com.example.obd2linkbackend.passkey.mapper.AuthChallengeMapper;
+import com.example.obd2linkbackend.passkey.mapper.PassKeysMapper;
 import com.example.obd2linkbackend.passkey.model.entity.AuthChallengeEntity;
+import com.example.obd2linkbackend.passkey.model.entity.PassKeyEntity;
 import com.example.obd2linkbackend.passkey.model.enums.ChallengePurpose;
 import com.example.obd2linkbackend.passkey.service.WebAuthnService;
 import com.example.obd2linkbackend.user.mapper.UserMapper;
@@ -39,6 +41,7 @@ import com.webauthn4j.data.RegistrationData;
 import com.webauthn4j.data.RegistrationParameters;
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier;
 import com.webauthn4j.WebAuthnManager;
+import com.webauthn4j.converter.util.ObjectConverter;
 
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
@@ -46,11 +49,13 @@ import lombok.RequiredArgsConstructor;
 
 @Service 
 @RequiredArgsConstructor 
-public class WeuAuthnServiceImpl implements WebAuthnService{
+public class WebAuthnServiceImpl implements WebAuthnService{
 
     private final ObjectMapper objectMapper;
+    private final ObjectConverter objectConverter;
     private final AuthChallengeMapper authChallengeMapper;
     private final UserMapper userMapper;
+    private final PassKeysMapper passKeysMapper;
 
     // クライアントが使用する公開鍵の種類の指定と、アルゴリズムを指定
     private static final List<PublicKeyCredentialParameters> PUB_KEY_CRED_PATAMS =
@@ -141,6 +146,28 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
             UserReqDto userReqDto = objectMapper.readValue(challenge.getPendingUserData(), UserReqDto.class);
             UserEntity userEntity = UserEntity.create(userReqDto.getEmail(), userReqDto.getDisplayName());
             userMapper.registerUser(userEntity);
+
+            // PassKeyEntityに保存するデータの階層を掘り下げる
+            var attestationObject = registrationData.getAttestationObject();
+            var authenticatorData = attestationObject.getAuthenticatorData();
+            var attestedCredentialData = authenticatorData.getAttestedCredentialData();
+
+            // credentialIdを取り出す
+            byte[] credentialId = attestedCredentialData.getCredentialId();
+            // userMapper.registerUser()で作成したユーザーの主キーを取得
+            Integer generatedUserId = userEntity.getId();
+            // 公開鍵を取り出す
+            byte[] publicKey = objectConverter.getCborConverter().writeValueAsBytes(attestedCredentialData.getCOSEKey()); 
+            // 認証回数を取り出す
+            Long signCount = authenticatorData.getSignCount();
+            
+            PassKeyEntity passKeyEntity = PassKeyEntity.create(credentialId, // 公開鍵に対応した一意の識別番号
+                generatedUserId, // usersテーブルの主キーを参照する外部キー
+                publicKey, // ユーザーの端末で作成された公開鍵
+                signCount, // 認証回数のカウント
+                "パスキー"); // 端末名称
+            passKeysMapper.registerPassKey(passKeyEntity);
+            
         }catch(VerificationException ex){
             // 検証に失敗した場合の例外処理
             throw new ChallengeVerificationException("パスキーが正しくありません");

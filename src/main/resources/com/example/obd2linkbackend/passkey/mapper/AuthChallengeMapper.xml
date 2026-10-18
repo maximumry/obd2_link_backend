@@ -24,31 +24,27 @@
             )
     </insert>
 
-    <!-- チャレンジ取得と削除（未期限切れのもの） -->
+    <!-- チャレンジ取得 -->
     <select id="selectChallenge" resultType="com.example.obd2linkbackend.passkey.model.entity.AuthChallengeEntity">
-        -- トランザクション開始
-        BEGIN;
-
-        -- ユーザーから来たチャレンジと同じ値を取得
         SELECT
-            id,
-            user_id AS userId,
-            challenge,
-            purpose,
-            registration_data AS registrationData,
+            id
+            , user_id AS userId,
+            , challenge
+            , purpose
+            , registration_data AS registrationData
             expires_at AS expiresAt
         FROM auth_challenges
         WHERE challenge = #{challenge}
           AND purpose = #{purpose}
           AND expires_at > now()
-
-        -- 取得したデータを削除
-        DELETE
-        FROM auth_challenges
-        WHERE challenge = #{challenge}
-
-        -- トランザクション確定
-        COMMIT;
     </select>
+
+    <!-- チャレンジ削除 -->
+    <delete id="deleteChallenge">
+        DELETE FROM 
+            auth_challenges
+        WHERE
+            id = #{id}
+    </delete>
 
 </mapper>

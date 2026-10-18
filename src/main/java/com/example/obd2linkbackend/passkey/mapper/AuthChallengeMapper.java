@@ -13,4 +13,6 @@ public interface AuthChallengeMapper {
 
     AuthChallengeEntity selectChallenge(@Param("challenge") byte[] challenge, @Param("purpose") ChallengePurpose purpose);
 
+    void deleteChallenge(@Param("id") byte[] id);
+
 }

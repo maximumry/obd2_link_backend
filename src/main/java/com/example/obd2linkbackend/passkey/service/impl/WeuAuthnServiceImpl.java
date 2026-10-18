@@ -132,6 +132,7 @@ public class WeuAuthnServiceImpl implements WebAuthnService{
         // ユーザーから届いたwebauthnとサーバーで保存してあるチャレンジを検証
         try{
             webAuthnManager.verify(registrationData, registrationParameters);
+            authChallengeMapper.deleteChallenge(challenge.getUserId());
         }catch(VerificationException ex){
             throw new ChallengeVerificationException("パスキーが正しくありません");
         }

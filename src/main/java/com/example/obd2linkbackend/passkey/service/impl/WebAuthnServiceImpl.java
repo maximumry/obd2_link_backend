@@ -52,7 +52,6 @@ import lombok.RequiredArgsConstructor;
 public class WebAuthnServiceImpl implements WebAuthnService{
 
     private final ObjectMapper objectMapper;
-    private final ObjectConverter objectConverter;
     private final AuthChallengeMapper authChallengeMapper;
     private final UserMapper userMapper;
     private final PassKeysMapper passKeysMapper;
@@ -126,8 +125,8 @@ public class WebAuthnServiceImpl implements WebAuthnService{
 
         // サーバー側の検証条件作成
         ServerProperty serverProperty = new ServerProperty(
-            new Origin("https://example.com"),
-            "example.com",
+            new Origin("http://localhost:8080"),
+            "localhost",
             new DefaultChallenge(challenge.getChallenge())
         );
 
@@ -140,7 +139,8 @@ public class WebAuthnServiceImpl implements WebAuthnService{
         try{
             // ユーザーから届いたwebauthnとサーバーで保存してあるチャレンジを検証
             webAuthnManager.verify(registrationData, registrationParameters);
-            authChallengeMapper.deleteChallenge(challenge.getUserId());
+            // 検証成功後、使用済みチャレンジを削除
+            authChallengeMapper.deleteChallenge(challenge.getId());
 
             // 検証に成功したので、usersテーブルへユーザー情報を保存
             UserReqDto userReqDto = objectMapper.readValue(challenge.getPendingUserData(), UserReqDto.class);
@@ -157,6 +157,7 @@ public class WebAuthnServiceImpl implements WebAuthnService{
             // userMapper.registerUser()で作成したユーザーの主キーを取得
             Integer generatedUserId = userEntity.getId();
             // 公開鍵を取り出す
+            ObjectConverter objectConverter = new ObjectConverter();
             byte[] publicKey = objectConverter.getCborConverter().writeValueAsBytes(attestedCredentialData.getCOSEKey()); 
             // 認証回数を取り出す
             Long signCount = authenticatorData.getSignCount();
@@ -167,7 +168,7 @@ public class WebAuthnServiceImpl implements WebAuthnService{
                 signCount, // 認証回数のカウント
                 "パスキー"); // 端末名称
             passKeysMapper.registerPassKey(passKeyEntity);
-            
+
         }catch(VerificationException ex){
             // 検証に失敗した場合の例外処理
             throw new ChallengeVerificationException("パスキーが正しくありません");

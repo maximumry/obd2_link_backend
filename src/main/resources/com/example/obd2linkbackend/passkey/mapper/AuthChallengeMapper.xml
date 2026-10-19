@@ -12,14 +12,14 @@
                 user_id
                 , challenge
                 , purpose
-                , registration_data
+                , pending_user_data
                 , expires_at
             )
             VALUES (
                 #{userId}
                 , #{challenge}
                 , #{purpose}
-                , #{registrationData}
+                , #{pendingUserData}
                 , #{expiresAt}
             )
     </insert>
@@ -28,11 +28,11 @@
     <select id="selectChallenge" resultType="com.example.obd2linkbackend.passkey.model.entity.AuthChallengeEntity">
         SELECT
             id
-            , user_id AS userId,
+            , user_id AS userId
             , challenge
             , purpose
-            , registration_data AS registrationData
-            expires_at AS expiresAt
+            , pending_user_data AS pendingUserData
+            , expires_at AS expiresAt
         FROM auth_challenges
         WHERE challenge = #{challenge}
           AND purpose = #{purpose}

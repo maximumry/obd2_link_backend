@@ -9,8 +9,8 @@ import jakarta.transaction.Transactional;
 public interface WebAuthnService {
 
     @Transactional 
-    PublicKeyCredentialCreationOptions generateRegistrationChallenge(UserReqDto dto, HttpSession session);
+    PublicKeyCredentialCreationOptions generateRegistrationChallenge(UserReqDto dto);
 
     @Transactional 
-    void verifyChallenge(String registrationResponseJSON, HttpSession session);
+    void verifyChallenge(String registrationResponseJSON);
 }

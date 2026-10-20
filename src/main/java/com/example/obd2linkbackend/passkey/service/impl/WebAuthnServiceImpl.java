@@ -1,16 +1,12 @@
 package com.example.obd2linkbackend.passkey.service.impl;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Base64;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.example.obd2linkbackend.passkey.exception.ChallengeVerificationException;
@@ -26,7 +22,6 @@ import com.example.obd2linkbackend.user.model.entity.UserEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ser.std.StdKeySerializers.Default;
 import com.webauthn4j.data.PublicKeyCredentialCreationOptions;
 import com.webauthn4j.data.PublicKeyCredentialParameters;
 import com.webauthn4j.data.PublicKeyCredentialRpEntity;
@@ -64,13 +59,10 @@ public class WebAuthnServiceImpl implements WebAuthnService{
         ));
 
     @Transactional 
-    public PublicKeyCredentialCreationOptions generateRegistrationChallenge(UserReqDto userReqDto, HttpSession session){
+    public PublicKeyCredentialCreationOptions generateRegistrationChallenge(UserReqDto userReqDto){
         // リクエストごとのチャレンジを生成
         Challenge challenge = new DefaultChallenge();
         byte[] challengeBytes = challenge.getValue();
-
-        // 後で検証するため、チャレンジを一時保存
-        session.setAttribute("webauthn_challenge", challenge);
 
         /**
          * パスキー登録時に端末へ渡すユーザー情報を作成
@@ -98,7 +90,7 @@ public class WebAuthnServiceImpl implements WebAuthnService{
     }
 
     @Transactional
-    public void verifyChallenge(String registrationResponseJSON, HttpSession session){
+    public void verifyChallenge(String registrationResponseJSON){
         // clientDataJSONからチャレンジを取り出す
         byte[] challengeBytes;
         try{

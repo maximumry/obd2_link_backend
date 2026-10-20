@@ -19,18 +19,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor 
 public class RegistrationController {
 
-    private final RegistrationService registrationService;
     private final WebAuthnService webAuthnService;
 
     @PostMapping("/options")
-    public PublicKeyCredentialCreationOptions generateRegistrationOptions(@Valid @RequestBody UserReqDto userReqDto, HttpSession session){
-        PublicKeyCredentialCreationOptions options = webAuthnService.generateRegistrationChallenge(userReqDto, session);
+    public PublicKeyCredentialCreationOptions generateRegistrationOptions(@Valid @RequestBody UserReqDto userReqDto){
+        PublicKeyCredentialCreationOptions options = webAuthnService.generateRegistrationChallenge(userReqDto);
         return options;
     }
 
     @PostMapping("/verify")
-    public void registerUser(@RequestBody String registrationResponseJSON, HttpSession session){
-        webAuthnService.verifyChallenge(registrationResponseJSON, session);
+    public void registerUser(@RequestBody String registrationResponseJSON){
+        webAuthnService.verifyChallenge(registrationResponseJSON);
     }
     
 }

@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 public class SecurityConfig {
@@ -12,22 +11,14 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/register/**").permitAll()
-                .anyRequest().authenticated()
-            )
             .csrf(csrf -> csrf.disable())
             .formLogin(form -> form
                 .permitAll()
             );
-            http
-            //  パスキー（webauthn）を有効化
-            // → /webauthn/register エンドポイントが生成される
-            // → ログインページに「パスキーでログイン」ボタンが追加される
-            .webAuthn(webAuthn -> webAuthn
-                .rpName("obd2-link-backend")
-                .rpId("localhost")
-                .allowedOrigins("http://localhost:8080")
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/auth/register/*", "/auth/login/*").permitAll()
+                .anyRequest().authenticated()
             );
 
         return http.build();

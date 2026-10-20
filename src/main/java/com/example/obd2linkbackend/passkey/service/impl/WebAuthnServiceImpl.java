@@ -158,7 +158,7 @@ public class WebAuthnServiceImpl implements WebAuthnService{
             Integer generatedUserId = userEntity.getId();
             // 公開鍵を取り出す
             ObjectConverter objectConverter = new ObjectConverter();
-            byte[] publicKey = objectConverter.getCborConverter().writeValueAsBytes(attestedCredentialData.getCOSEKey()); 
+            byte[] publicKey = objectConverter.getCborConverter().writeValueAsBytes(attestedCredentialData.getCOSEKey());
             // 認証回数を取り出す
             Long signCount = authenticatorData.getSignCount();
             

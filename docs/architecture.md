@@ -15,7 +15,7 @@ OBD2記録端末 ─ HTTPS / JSON ──┘
 | テーブル | 主なカラム |
 | --- | --- |
 | `users` | `id`、`email`（一意）、`display_name`、`created_at` |
-| `sessions` | `id`、`user_id`、`token_hash`、`expires_at` |
+| `sessions` | `session_id`、`user_id`、`token_hash`、`expires_at` |
 | `passkeys` | `passkey_id`（主キー）、`credential_id`（一意）、`user_id`、`public_key`、`sign_count`、`name`、`created_at` |
 | `auth_challenges` | `id`、`challenge`、`purpose`、`user_id`（登録時は仮ID）、`session_id`（再認証時）、`registration_data`（登録時のみ）、`expires_at` |
 | `reauth_tokens` | `id`、`session_id`、`token_hash`、`purpose`、`target_id`、`expires_at` |
@@ -88,7 +88,7 @@ OBD2記録端末 ─ HTTPS / JSON ──┘
 - ユーザー認証はパスキーのみ。メールは識別情報として保存し、メールの所有確認や認証・復旧には使用しない。
 - 登録時にランダムなユーザーIDを発行し、WebAuthnの`user.id`として使用する。登録成功時にユーザーとパスキーを同一トランザクションで保存する。既存メールへの登録でアカウントを上書き・統合しない。
 - チャレンジは暗号学的乱数で生成し、5分有効・1回限りとする。用途・対象ユーザー・セッションに紐付け、検証成功時に原子的に消費する。登録中のメール・表示名はチャレンジに紐付け、有効期限後に破棄する。
-- 登録・認証時はチャレンジ、処理種別、許可したOrigin、RP ID、ユーザー確認（UV）を検証する。認証時は保存済み公開鍵で署名を検証し、credential IDとuserHandleが同じユーザーを指すことを確認する。Discoverable Credentialと`userVerification: required`を使用する。
+- 登録・認証時はチャレンジ、処理種別、許可したOrigin、RP ID、ユーザー確認（UV）を検証する。認証時は保存済み公開鍵で署名を検証し、Discoverable Credentialと`userVerification: required`を使用する。
 - サーバーは公開鍵を保存し、秘密鍵・生体情報は取得しない。署名カウンターは同期パスキーで増加しない場合も考慮し、カウンターだけで一律に拒否しない。
 - ユーザートークンは有効期限30日とし、DBにはハッシュのみ保存する。iPhoneではKeychainに保存する。
 - 再認証は現在のユーザーのパスキーで行う。再認証トークンは5分有効・1回限りとし、セッション・操作・対象IDに紐付ける。退会、端末トークン再発行、パスキー追加・削除で検証・消費する。

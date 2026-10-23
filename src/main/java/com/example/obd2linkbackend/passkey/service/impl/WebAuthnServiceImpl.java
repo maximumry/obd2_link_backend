@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Base64;
 
+import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions.PublicKeyCredentialRequestOptionsBuilder;
 import org.springframework.stereotype.Service;
 
 import com.example.obd2linkbackend.passkey.exception.ChallengeVerificationException;
@@ -17,6 +18,7 @@ import com.example.obd2linkbackend.passkey.model.entity.PassKeyEntity;
 import com.example.obd2linkbackend.passkey.model.enums.ChallengePurpose;
 import com.example.obd2linkbackend.passkey.service.WebAuthnService;
 import com.example.obd2linkbackend.user.mapper.UserMapper;
+import com.example.obd2linkbackend.user.model.dto.request.LoginReqDto;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
 import com.example.obd2linkbackend.user.model.entity.UserEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,8 +26,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webauthn4j.data.PublicKeyCredentialCreationOptions;
 import com.webauthn4j.data.PublicKeyCredentialParameters;
+import com.webauthn4j.data.PublicKeyCredentialRequestOptions;
 import com.webauthn4j.data.PublicKeyCredentialRpEntity;
 import com.webauthn4j.data.PublicKeyCredentialType;
+import com.webauthn4j.data.UserVerificationRequirement;
 import com.webauthn4j.data.client.Origin;
 import com.webauthn4j.data.client.challenge.Challenge;
 import com.webauthn4j.data.client.challenge.DefaultChallenge;
@@ -38,7 +42,6 @@ import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier;
 import com.webauthn4j.WebAuthnManager;
 import com.webauthn4j.converter.util.ObjectConverter;
 
-import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -58,6 +61,10 @@ public class WebAuthnServiceImpl implements WebAuthnService{
             COSEAlgorithmIdentifier.ES256
         ));
 
+    /**
+     * パスキー登録用のチャレンジと設定情報を生成し、DBへ一時保存する
+     * ユーザー端末でパスキーを作成する際に必要な情報をまとめて返却
+    **/
     @Transactional 
     public PublicKeyCredentialCreationOptions generateRegistrationChallenge(UserReqDto userReqDto){
         // リクエストごとのチャレンジを生成
@@ -89,6 +96,10 @@ public class WebAuthnServiceImpl implements WebAuthnService{
         return new PublicKeyCredentialCreationOptions(rp, user, challenge, PUB_KEY_CRED_PATAMS);
     }
 
+    /**
+     * ユーザー端末から受け取ったパスキー登録情報とDBのチャレンジを検証する
+     * 検証に成功した場合、ユーザー情報と公開鍵（パスキー）をDBへ本登録する
+    **/
     @Transactional
     public void verifyChallenge(String registrationResponseJSON){
         // clientDataJSONからチャレンジを取り出す
@@ -168,5 +179,17 @@ public class WebAuthnServiceImpl implements WebAuthnService{
             // ユーザー情報が存在しなかった場合の例外処理
             throw new RuntimeException("ユーザー登録に失敗しました");
         }
+    }
+
+    /**
+     * ユーザーからリクエスト時に受領したメールアドレスを元にCredentialIDと公開鍵を探す
+     */
+    @Transactional 
+    public void generateLoginChallenge(LoginReqDto loginReqDto){
+        // ユーザーに検証してもらうチャレンジを生成
+        Challenge challenge = new DefaultChallenge();
+        byte[] challengeBytes = challenge.getValue();
+
+        PublicKeyCredentialRequestOptions options = new PublicKeyCredentialRequestOptions(challenge, 300000L, "localhost", null, UserVerificationRequirement.REQUIRED, null);
     }
 }

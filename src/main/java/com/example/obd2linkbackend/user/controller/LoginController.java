@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.obd2linkbackend.passkey.service.WebAuthnService;
 import com.example.obd2linkbackend.user.model.dto.request.LoginReqDto;
+import com.webauthn4j.data.PublicKeyCredentialRequestOptions;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,9 +21,8 @@ public class LoginController {
     private final WebAuthnService webAuthnService;
 
     @PostMapping("/options")
-    public String generateLoginOptions(@Valid @RequestBody LoginReqDto dto) {
-        webAuthnService.generateLoginChallenge(dto);
-        
+    public PublicKeyCredentialRequestOptions generateLoginOptions(@Valid @RequestBody LoginReqDto dto) {
+        return webAuthnService.generateLoginChallenge(dto);
     }
     
     

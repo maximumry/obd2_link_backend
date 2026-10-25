@@ -7,7 +7,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Base64;
 
-import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions.PublicKeyCredentialRequestOptionsBuilder;
 import org.springframework.stereotype.Service;
 
 import com.example.obd2linkbackend.passkey.exception.ChallengeVerificationException;
@@ -88,8 +87,8 @@ public class WebAuthnServiceImpl implements WebAuthnService{
             Instant now = Instant.now();
             AuthChallengeEntity entity = AuthChallengeEntity.create(userIdBytes, challengeBytes, ChallengePurpose.REGISTRATION, objectMapper.writeValueAsString(userReqDto), now.plus(Duration.ofMinutes(5)));
             authChallengeMapper.insertChallenge(entity);
-        }catch(JsonProcessingException e){
-            throw new RuntimeException(e);
+        }catch(JsonProcessingException ex){
+            throw new RuntimeException(ex);
         }
 
         // サーバー側、公開鍵、ユーザー、チャレンジの4つの情報をまとめたオブジェクトをコントローラーへレスポンス
@@ -110,8 +109,8 @@ public class WebAuthnServiceImpl implements WebAuthnService{
                 registrationResponse.get("response").get("clientDataJSON").asText());
             JsonNode clientData = objectMapper.readTree(clientDataJson);
             challengeBytes = Base64.getUrlDecoder().decode(clientData.get("challenge").asText());
-        }catch(IOException e){
-            throw new IllegalArgumentException("clientDataJSONの形式が正しくありません", e);
+        }catch(IOException ex){
+            throw new IllegalArgumentException("clientDataJSONの形式が正しくありません", ex);
         }
         
         // DBから未期限切れのチャレンジを取得
@@ -185,11 +184,22 @@ public class WebAuthnServiceImpl implements WebAuthnService{
      * ユーザーからリクエスト時に受領したメールアドレスを元にCredentialIDと公開鍵を探す
      */
     @Transactional 
-    public void generateLoginChallenge(LoginReqDto loginReqDto){
+    public PublicKeyCredentialRequestOptions generateLoginChallenge(LoginReqDto loginReqDto){
         // ユーザーに検証してもらうチャレンジを生成
         Challenge challenge = new DefaultChallenge();
         byte[] challengeBytes = challenge.getValue();
 
         PublicKeyCredentialRequestOptions options = new PublicKeyCredentialRequestOptions(challenge, 300000L, "localhost", null, UserVerificationRequirement.REQUIRED, null);
+        
+        // 生成したチャレンジをDBへ保存
+        try{
+            Instant now = Instant.now();
+            AuthChallengeEntity entity = AuthChallengeEntity.create(1, challengeBytes, ChallengePurpose.LOGIN, null, now.plus(Duration.ofMinutes(5)));
+            authChallengeMapper.insertChallenge(entity);
+        }catch(JsonProcessingException ex){
+            throw new RuntimeException(ex);
+        }
+
+        return options;
     }
 }

@@ -5,6 +5,18 @@
 
 <mapper namespace="com.example.obd2linkbackend.passkey.mapper.PassKeysMapper">
 
+    <!-- credentialIdを元にパスキー情報を取得 -->
+    <select id="selectByCredentialId"
+            resultType="com.example.obd2linkbackend.passkey.model.entity.PassKeyEntity">
+        SELECT
+            credential_id AS credentialId
+            , user_id AS userId
+            , public_key AS publicKey
+            , sign_count AS signCount
+        FROM passkeys
+        WHERE credential_id = #{credentialId}
+    </select>
+
     <!-- パスキー登録　-->
     <insert id="registerPassKey">
         INSERT INTO
@@ -24,4 +36,9 @@
             )
     </insert>
 
+    <update id="updateSignCount">
+        UPDATE passkeys
+            SET sign_count = GREATEST(sign_count, #{signCount})
+        WHERE credential_id = #{credentialId}
+    </update>
 </mapper>

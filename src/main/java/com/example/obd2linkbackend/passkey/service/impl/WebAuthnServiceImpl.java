@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Base64;
 
+import org.springframework.boot.autoconfigure.couchbase.CouchbaseProperties.Authentication;
 import org.springframework.stereotype.Service;
 
 import com.example.obd2linkbackend.passkey.exception.ChallengeVerificationException;
@@ -23,6 +24,7 @@ import com.example.obd2linkbackend.user.model.entity.UserEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.webauthn4j.data.AuthenticationParameters;
 import com.webauthn4j.data.PublicKeyCredentialCreationOptions;
 import com.webauthn4j.data.PublicKeyCredentialParameters;
 import com.webauthn4j.data.PublicKeyCredentialRequestOptions;
@@ -32,14 +34,22 @@ import com.webauthn4j.data.UserVerificationRequirement;
 import com.webauthn4j.data.client.Origin;
 import com.webauthn4j.data.client.challenge.Challenge;
 import com.webauthn4j.data.client.challenge.DefaultChallenge;
+import com.webauthn4j.data.extension.authenticator.AuthenticationExtensionsAuthenticatorOutputs;
 import com.webauthn4j.server.ServerProperty;
 import com.webauthn4j.verifier.exception.VerificationException;
 import com.webauthn4j.data.PublicKeyCredentialUserEntity;
 import com.webauthn4j.data.RegistrationData;
+import com.webauthn4j.data.AuthenticationData;
 import com.webauthn4j.data.RegistrationParameters;
+import com.webauthn4j.data.attestation.authenticator.AAGUID;
+import com.webauthn4j.data.attestation.authenticator.AttestedCredentialData;
+import com.webauthn4j.data.attestation.authenticator.COSEKey;
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier;
+import com.webauthn4j.data.attestation.statement.NoneAttestationStatement;
 import com.webauthn4j.WebAuthnManager;
 import com.webauthn4j.converter.util.ObjectConverter;
+import com.webauthn4j.credential.CredentialRecord;
+import com.webauthn4j.credential.CredentialRecordImpl;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -136,13 +146,18 @@ public class WebAuthnServiceImpl implements WebAuthnService{
             serverProperty,
             PUB_KEY_CRED_PATAMS,
             true, // 生体認証を必須に
-            true); // ユーザー操作を必須
+            true
+        ); // ユーザー操作を必須
         
         try{
             // ユーザーから届いたwebauthnとサーバーで保存してあるチャレンジを検証
             webAuthnManager.verify(registrationData, registrationParameters);
             // 検証成功後、使用済みチャレンジを削除
-            authChallengeMapper.deleteChallenge(challenge.getId());
+            int deleteCount = authChallengeMapper.deleteChallenge(challenge.getId());
+            // チャレンジが削除されたか確認
+            if(deleteCount != 1){
+                throw new ChallengeVerificationException("チャレンジは既に使用されています");
+            }
 
             // 検証に成功したので、usersテーブルへユーザー情報を保存
             UserReqDto userReqDto = objectMapper.readValue(challenge.getPendingUserData(), UserReqDto.class);
@@ -192,14 +207,106 @@ public class WebAuthnServiceImpl implements WebAuthnService{
         PublicKeyCredentialRequestOptions options = new PublicKeyCredentialRequestOptions(challenge, 300000L, "localhost", null, UserVerificationRequirement.REQUIRED, null);
         
         // 生成したチャレンジをDBへ保存
-        try{
-            Instant now = Instant.now();
-            AuthChallengeEntity entity = AuthChallengeEntity.create(1, challengeBytes, ChallengePurpose.LOGIN, null, now.plus(Duration.ofMinutes(5)));
-            authChallengeMapper.insertChallenge(entity);
-        }catch(JsonProcessingException ex){
-            throw new RuntimeException(ex);
-        }
+        Instant now = Instant.now();
+        AuthChallengeEntity entity = AuthChallengeEntity.create(null, challengeBytes, ChallengePurpose.LOGIN, null, now.plus(Duration.ofMinutes(5)));
+        authChallengeMapper.insertChallenge(entity);
 
         return options;
+    }
+
+    /**
+     * サーバー側が発行したチャレンジの検証
+     */
+    @Transactional 
+    public void verifyLoginChallenge(String loginResponseJSON){
+        // clientDataJSONからチャレンジを取り出す
+        byte[] challengeBytes;
+        try{
+            JsonNode loginResponse = objectMapper.readTree(loginResponseJSON);
+            byte[] clientDataJson = Base64.getUrlDecoder().decode(
+                loginResponse.get("response").get("clientDataJSON").asText()
+            );
+            JsonNode clientData = objectMapper.readTree(clientDataJson);
+            challengeBytes = Base64.getUrlDecoder().decode(
+                clientData.get("challenge").asText()
+            );
+        }catch(IOException ex){
+            throw new IllegalArgumentException("clientDataJSONの形式が正しくありません", ex);
+        }
+
+        // ユーザーが検証したチャレンジと、DBの"LOGIN"と一致するレコードを取得
+        AuthChallengeEntity challenge = authChallengeMapper.selectChallenge(challengeBytes, ChallengePurpose.LOGIN);
+        if(challenge == null){
+            throw new ChallengeVerificationException("チャレンジが見つからないか、期限切れです");
+        }
+
+        // サーバーで生成したチャレンジと、クライアント側のチャレンジを検証
+        WebAuthnManager webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager();
+        // サーバー側の検証条件作成
+        ServerProperty serverProperty = new ServerProperty(
+            new Origin("http://localhost:8080"),
+            "localhost",
+            new DefaultChallenge(challenge.getChallenge())
+        );
+        // ユーザー端末から受け取ったJSONを解析
+        AuthenticationData authenticationData =
+            webAuthnManager.parseAuthenticationResponseJSON(loginResponseJSON);
+        // credentialIdを取り出す
+        byte[] credentialId = authenticationData.getCredentialId();
+        // credentialIdを元にDBからパスキー情報を取得
+        PassKeyEntity passKey = passKeysMapper.selectByCredentialId(credentialId);
+        if(passKey == null){
+            throw new ChallengeVerificationException("登録済みのパスキーが見つかりません");
+        }
+
+        ObjectConverter objectConverter = new ObjectConverter();
+        // サーバーに保存してあった公開鍵を取得
+        COSEKey coseKey = objectConverter.getCborConverter()
+            .readValue(passKey.getPublicKey(), COSEKey.class);
+        
+        //　公開鍵とCredentialIdをwebauthn4jの型にまとめる
+        AttestedCredentialData attestedCredentialData = new AttestedCredentialData(
+            AAGUID.NULL,
+            passKey.getCredentialId(),
+            coseKey
+        );
+
+        // passKeyのDBから取得した情報をまとめて検証用レコードを作成
+        CredentialRecord credentialRecord = new CredentialRecordImpl(
+            new NoneAttestationStatement(),
+            null,
+            null,
+            null,
+            passKey.getSignCount(),
+            attestedCredentialData,
+            new AuthenticationExtensionsAuthenticatorOutputs<>(),
+            null,
+            null,
+            null
+        );
+
+        AuthenticationParameters authenticationParameters = new AuthenticationParameters(
+            serverProperty,
+            credentialRecord,
+            null,
+            true,
+            true
+        );
+
+        webAuthnManager.verify(authenticationData, authenticationParameters);
+
+        // 一度検証したチャレンジは再利用しないため、削除処理実行
+        int deleteCount = authChallengeMapper.deleteChallenge(challenge.getId());
+        // チャレンジが削除されたか確認
+        if(deleteCount != 1){
+            throw new ChallengeVerificationException("チャレンジは既に使用されています");
+        }
+
+        // 認証機から返されたカウンターを保存
+        long signCount = authenticationData.getAuthenticatorData().getSignCount();
+        int updatedCount = passKeysMapper.updateSignCount(credentialId, signCount);
+        if(updatedCount != 1){
+            throw new ChallengeVerificationException("パスキー情報の更新に失敗しました");
+        }
     }
 }

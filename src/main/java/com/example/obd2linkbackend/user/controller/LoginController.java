@@ -25,5 +25,10 @@ public class LoginController {
         return webAuthnService.generateLoginChallenge(dto);
     }
     
+    @PostMapping("/verify")
+    public void veryfyLogin(@RequestBody String loginResponseJSON) {
+        webAuthnService.verifyLoginChallenge(loginResponseJSON);
+    }
+    
     
 }

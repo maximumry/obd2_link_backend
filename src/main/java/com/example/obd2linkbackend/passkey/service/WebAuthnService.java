@@ -17,4 +17,7 @@ public interface WebAuthnService {
 
     @Transactional 
     PublicKeyCredentialRequestOptions generateLoginChallenge(LoginReqDto dto);
+
+    @Transactional 
+    void verifyLoginChallenge(String loginResponseJSON);
 }

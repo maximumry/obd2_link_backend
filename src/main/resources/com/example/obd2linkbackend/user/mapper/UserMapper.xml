@@ -6,7 +6,7 @@
 <mapper namespace="com.example.obd2linkbackend.user.mapper.UserMapper">
 
     <!-- 1件取得 -->
-    <select id="getUser" resultType="com.example.obd2linkbackend.user.model.entity.User">
+    <select id="getUser" resultType="com.example.obd2linkbackend.user.model.entity.UserEntity">
         SELECT
             id
             , email

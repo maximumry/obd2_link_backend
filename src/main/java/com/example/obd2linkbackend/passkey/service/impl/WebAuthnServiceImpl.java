@@ -21,6 +21,7 @@ import com.example.obd2linkbackend.user.mapper.UserMapper;
 import com.example.obd2linkbackend.user.model.dto.request.LoginReqDto;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
 import com.example.obd2linkbackend.user.model.entity.UserEntity;
+import com.example.obd2linkbackend.user.service.SessionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -62,6 +63,7 @@ public class WebAuthnServiceImpl implements WebAuthnService{
     private final AuthChallengeMapper authChallengeMapper;
     private final UserMapper userMapper;
     private final PassKeysMapper passKeysMapper;
+    private final SessionService sessionService;
 
     // クライアントが使用する公開鍵の種類の指定と、アルゴリズムを指定
     private static final List<PublicKeyCredentialParameters> PUB_KEY_CRED_PATAMS =
@@ -294,6 +296,9 @@ public class WebAuthnServiceImpl implements WebAuthnService{
         );
 
         webAuthnManager.verify(authenticationData, authenticationParameters);
+
+        // セッション管理のためのtokenを発行
+        String token = sessionService.generateToken();
 
         // 一度検証したチャレンジは再利用しないため、削除処理実行
         int deleteCount = authChallengeMapper.deleteChallenge(challenge.getId());

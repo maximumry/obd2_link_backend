@@ -1,13 +1,16 @@
 package com.example.obd2linkbackend.passkey.service.impl;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Base64;
+import java.util.HexFormat;
 
-import org.springframework.boot.autoconfigure.couchbase.CouchbaseProperties.Authentication;
 import org.springframework.stereotype.Service;
 
 import com.example.obd2linkbackend.passkey.exception.ChallengeVerificationException;
@@ -17,9 +20,12 @@ import com.example.obd2linkbackend.passkey.model.entity.AuthChallengeEntity;
 import com.example.obd2linkbackend.passkey.model.entity.PassKeyEntity;
 import com.example.obd2linkbackend.passkey.model.enums.ChallengePurpose;
 import com.example.obd2linkbackend.passkey.service.WebAuthnService;
+import com.example.obd2linkbackend.user.mapper.SessionMapper;
 import com.example.obd2linkbackend.user.mapper.UserMapper;
 import com.example.obd2linkbackend.user.model.dto.request.LoginReqDto;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
+import com.example.obd2linkbackend.user.model.dto.response.LoginResDto;
+import com.example.obd2linkbackend.user.model.entity.SessionEntity;
 import com.example.obd2linkbackend.user.model.entity.UserEntity;
 import com.example.obd2linkbackend.user.service.SessionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -64,6 +70,7 @@ public class WebAuthnServiceImpl implements WebAuthnService{
     private final UserMapper userMapper;
     private final PassKeysMapper passKeysMapper;
     private final SessionService sessionService;
+    private final SessionMapper sessionMapper;
 
     // クライアントが使用する公開鍵の種類の指定と、アルゴリズムを指定
     private static final List<PublicKeyCredentialParameters> PUB_KEY_CRED_PATAMS =
@@ -220,7 +227,7 @@ public class WebAuthnServiceImpl implements WebAuthnService{
      * サーバー側が発行したチャレンジの検証
      */
     @Transactional 
-    public void verifyLoginChallenge(String loginResponseJSON){
+    public LoginResDto verifyLoginChallenge(String loginResponseJSON){
         // clientDataJSONからチャレンジを取り出す
         byte[] challengeBytes;
         try{
@@ -299,6 +306,23 @@ public class WebAuthnServiceImpl implements WebAuthnService{
 
         // セッション管理のためのtokenを発行
         String token = sessionService.generateToken();
+        // トークンの有効期限を設定
+        Instant expiresAt = Instant.now().plus(Duration.ofDays(30));
+
+        // トークンをセキュリティ向上のためハッシュ化
+        try{
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] bytes = md.digest(token.getBytes(StandardCharsets.UTF_8));
+            String hexFormat = HexFormat.of().formatHex(bytes);
+            SessionEntity sessionEntity = SessionEntity.create(
+                passKey.getUserId(),
+                hexFormat,
+                expiresAt
+            );
+            sessionMapper.insertSession(sessionEntity);
+        }catch(NoSuchAlgorithmException ex){
+            throw new IllegalStateException("ハッシュアルゴリズムが見つかりません");
+        }
 
         // 一度検証したチャレンジは再利用しないため、削除処理実行
         int deleteCount = authChallengeMapper.deleteChallenge(challenge.getId());
@@ -313,5 +337,11 @@ public class WebAuthnServiceImpl implements WebAuthnService{
         if(updatedCount != 1){
             throw new ChallengeVerificationException("パスキー情報の更新に失敗しました");
         }
+
+        // ユーザーへレスポンスするDTOを設定
+        LoginResDto loginResDto = new LoginResDto();
+        loginResDto.setToken(token);
+        loginResDto.setExpiresAt(expiresAt);
+        return loginResDto;
     }
 }

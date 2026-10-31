@@ -2,6 +2,7 @@ package com.example.obd2linkbackend.passkey.service;
 
 import com.example.obd2linkbackend.user.model.dto.request.LoginReqDto;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
+import com.example.obd2linkbackend.user.model.dto.response.LoginResDto;
 import com.webauthn4j.data.PublicKeyCredentialCreationOptions;
 import com.webauthn4j.data.PublicKeyCredentialRequestOptions;
 
@@ -19,5 +20,5 @@ public interface WebAuthnService {
     PublicKeyCredentialRequestOptions generateLoginChallenge(LoginReqDto dto);
 
     @Transactional 
-    void verifyLoginChallenge(String loginResponseJSON);
+    LoginResDto verifyLoginChallenge(String loginResponseJSON);
 }

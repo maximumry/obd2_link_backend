@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service;
 
 import com.example.obd2linkbackend.user.service.SessionService;
 
-import jakarta.transaction.Transactional;
 import java.security.SecureRandom;
 import java.util.Base64;
 
@@ -13,7 +12,6 @@ public class SessionServiceImpl implements SessionService {
 
     private final SecureRandom secureRandom = new SecureRandom();
 
-    @Transactional  
     public String generateToken(){
         byte[] bytes = new byte[32];
         secureRandom.nextBytes(bytes);

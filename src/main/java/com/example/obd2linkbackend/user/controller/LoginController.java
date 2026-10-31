@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.obd2linkbackend.passkey.service.WebAuthnService;
 import com.example.obd2linkbackend.user.model.dto.request.LoginReqDto;
+import com.example.obd2linkbackend.user.model.dto.response.LoginResDto;
 import com.webauthn4j.data.PublicKeyCredentialRequestOptions;
 
 import jakarta.validation.Valid;
@@ -26,8 +27,8 @@ public class LoginController {
     }
     
     @PostMapping("/verify")
-    public void veryfyLogin(@RequestBody String loginResponseJSON) {
-        webAuthnService.verifyLoginChallenge(loginResponseJSON);
+    public LoginResDto veryfyLogin(@RequestBody String loginResponseJSON) {
+        return webAuthnService.verifyLoginChallenge(loginResponseJSON);
     }
     
     

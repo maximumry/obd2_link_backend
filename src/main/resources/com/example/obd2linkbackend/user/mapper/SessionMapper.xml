@@ -20,4 +20,16 @@
             )
     </insert>
 
+    <!-- セッション取得 -->
+    <select id="findValidSession" resultType="com.example.obd2linkbackend.user.model.entity.SessionEntity">
+        SELECT
+            session_id AS sessionId
+            , user_id AS userId
+            , token_hash AS tokenHash
+            , expires_at AS expiresAt
+        FROM sessions
+        WHERE token_hash = #{tokenHash}
+        AND expires_at > CURRENT_TIMESTAMP
+    </select>
+
 </mapper>

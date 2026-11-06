@@ -10,4 +10,6 @@ public interface SessionService {
     String generateToken();
 
     SessionEntity findValidSession(String token);
+
+    void deleteSession(String token);
 }

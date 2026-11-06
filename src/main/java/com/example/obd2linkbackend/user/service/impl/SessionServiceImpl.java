@@ -44,5 +44,18 @@ public class SessionServiceImpl implements SessionService {
             throw new IllegalStateException("ハッシュアルゴリズムが見つかりませんでした");
         }
     }
+
+    @Override 
+    public void deleteSession(String token){
+        try{
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(token.getBytes(StandardCharsets.UTF_8));
+            String tokenHash = HexFormat.of().formatHex(hash);
+
+            sessionMapper.deleteSession(tokenHash);
+        }catch(NoSuchAlgorithmException ex){
+            throw new IllegalStateException("ハッシュアルゴリズムが見つかりませんでした");
+        }
+    }
     
 }

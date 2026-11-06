@@ -11,4 +11,6 @@ public interface SessionMapper {
     void insertSession(SessionEntity entity);
 
     SessionEntity findValidSession(@Param("tokenHash") String tokenHash);
+
+    void deleteSession(@Param("tokenHash") String tokenHash);
 }

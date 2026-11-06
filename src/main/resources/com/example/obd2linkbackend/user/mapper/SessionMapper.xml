@@ -32,4 +32,11 @@
         AND expires_at > CURRENT_TIMESTAMP
     </select>
 
+    <!-- セッション削除 -->
+    <delete id="deleteSession">
+        DELETE
+        FROM sessions
+        WHERE token_hash = #{tokenHash}
+    </delete>
+
 </mapper>

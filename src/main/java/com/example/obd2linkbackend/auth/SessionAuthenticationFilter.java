@@ -2,7 +2,6 @@ package com.example.obd2linkbackend.auth;
 
 import java.io.IOException;
 
-import org.springframework.boot.actuate.endpoint.SecurityContext;
 import org.springframework.http.HttpHeaders;
 
 import org.springframework.lang.NonNull;

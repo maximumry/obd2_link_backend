@@ -2,8 +2,6 @@ package com.example.obd2linkbackend.auth;
 
 import java.io.IOException;
 
-import org.springframework.http.HttpHeaders;
-
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,7 +17,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.util.StringUtils;
 
 @RequiredArgsConstructor 
 public class SessionAuthenticationFilter extends OncePerRequestFilter {
@@ -32,7 +29,8 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
         @NonNull HttpServletResponse response,
         @NonNull FilterChain filterChain) throws ServletException, IOException{
 
-        String token = resolve(request);
+        BearerTokenResolver bearerTokenResolver = new BearerTokenResolver();
+        String token = bearerTokenResolver.resolve(request);
         if(token != null){
             SessionEntity entity = sessionService.findValidSession(token);
             if(entity != null){
@@ -53,15 +51,6 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private String resolve(HttpServletRequest request){
-        String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
-
-        if(StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")){
-            return bearerToken.substring(7);
-        }
-        return null;
     }
     
 }

@@ -8,14 +8,26 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.example.obd2linkbackend.user.model.entity.UserEntity;
 
 public class CustomUserDetails implements UserDetails {
+    private final Integer userId;
+    private final Long sessionId;
     private final String email;
     private final String displayName;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public CustomUserDetails(UserEntity user){
+    public CustomUserDetails(UserEntity user, Long sessionId){
+        this.userId = user.getId();
+        this.sessionId = sessionId;
         this.email = user.getEmail();
         this.displayName = user.getDisplayName();
         this.authorities = java.util.List.of();
+    }
+
+    public Integer getUserId(){
+        return userId;
+    }
+
+    public Long getSessionId(){
+        return sessionId;
     }
 
     @Override 

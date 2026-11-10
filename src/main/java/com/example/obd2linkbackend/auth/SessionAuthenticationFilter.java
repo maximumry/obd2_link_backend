@@ -37,7 +37,7 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
                 UserEntity user = userMapper.getUser(entity.getUserId());
 
                 if(user != null){
-                    CustomUserDetails principal = new CustomUserDetails(user);
+                    CustomUserDetails principal = new CustomUserDetails(user, entity.getSessionId());
                     var authentication = new UsernamePasswordAuthenticationToken(
                         principal,
                         null,

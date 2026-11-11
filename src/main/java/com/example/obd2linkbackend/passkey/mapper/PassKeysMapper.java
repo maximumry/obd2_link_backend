@@ -14,4 +14,5 @@ public interface PassKeysMapper {
 
     int updateSignCount(@Param("credentialId") byte[] crendetialId, @Param("signCount") long signCount);
     
+    int deletePassKey(@Param("userId") Integer userId);
 }

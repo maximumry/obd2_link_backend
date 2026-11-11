@@ -12,16 +12,18 @@ import com.example.obd2linkbackend.user.model.dto.request.ReauthOptionsReqDto;
 import com.webauthn4j.data.PublicKeyCredentialRequestOptions;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController 
 @RequestMapping("/auth/reauth")
+@RequiredArgsConstructor 
 public class ReauthController {
 
     private final WebAuthnService webAuthnService;
 
     @PostMapping 
     public PublicKeyCredentialRequestOptions generateReauthOptions(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody ReauthOptionsReqDto dto){
-        return webAuthnService.generateReauthChallenge(user);
+        return webAuthnService.generateReauthChallenge(user, dto);
     }
     
 }

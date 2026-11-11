@@ -19,7 +19,9 @@ import com.example.obd2linkbackend.passkey.mapper.AuthChallengeMapper;
 import com.example.obd2linkbackend.passkey.mapper.PassKeysMapper;
 import com.example.obd2linkbackend.passkey.model.entity.AuthChallengeEntity;
 import com.example.obd2linkbackend.passkey.model.entity.PassKeyEntity;
+import com.example.obd2linkbackend.passkey.model.entity.ReauthChallengeEntity;
 import com.example.obd2linkbackend.passkey.model.enums.ChallengePurpose;
+import com.example.obd2linkbackend.passkey.model.enums.ReauthPurpose;
 import com.example.obd2linkbackend.passkey.service.WebAuthnService;
 import com.example.obd2linkbackend.user.mapper.SessionMapper;
 import com.example.obd2linkbackend.user.mapper.UserMapper;
@@ -30,6 +32,7 @@ import com.example.obd2linkbackend.user.model.dto.response.LoginResDto;
 import com.example.obd2linkbackend.user.model.entity.SessionEntity;
 import com.example.obd2linkbackend.user.model.entity.UserEntity;
 import com.example.obd2linkbackend.user.service.SessionService;
+import com.example.obd2linkbackend.user.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -73,6 +76,7 @@ public class WebAuthnServiceImpl implements WebAuthnService{
     private final PassKeysMapper passKeysMapper;
     private final SessionService sessionService;
     private final SessionMapper sessionMapper;
+    private final UserService userService;
 
     // クライアントが使用する公開鍵の種類の指定と、アルゴリズムを指定
     private static final List<PublicKeyCredentialParameters> PUB_KEY_CRED_PATAMS =
@@ -348,7 +352,18 @@ public class WebAuthnServiceImpl implements WebAuthnService{
     }
 
     @Transactional 
-    public PublicKeyCredentialCreationOptions generateReauthChallenge(CustomUserDetails user, ReauthOptionsReqDto dto){
-        
+    public PublicKeyCredentialRequestOptions generateReauthChallenge(CustomUserDetails user, ReauthOptionsReqDto dto){
+        // リクエストごとのチャレンジを生成
+        Challenge challenge = new DefaultChallenge();
+        byte[] challengeBytes = challenge.getValue();
+
+        PublicKeyCredentialRequestOptions options = new PublicKeyCredentialRequestOptions(challenge, 300000L, "localhost", null, UserVerificationRequirement.REQUIRED, null);
+
+        // 生成したチャレンジをDBへ保存
+        Instant now = Instant.now();
+        ReauthChallengeEntity entity = ReauthChallengeEntity.create(user.getUserId(), user.getSessionId(), challengeBytes, dto.getPurpose(), dto.getTargetId(), now.plus(Duration.ofMinutes(5)));
+        authChallengeMapper.insertChallenge(entity);
+
+        return options;
     }
 }

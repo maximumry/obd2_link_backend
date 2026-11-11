@@ -13,6 +13,7 @@ import java.util.HexFormat;
 
 import org.springframework.stereotype.Service;
 
+import com.example.obd2linkbackend.auth.CustomUserDetails;
 import com.example.obd2linkbackend.passkey.exception.ChallengeVerificationException;
 import com.example.obd2linkbackend.passkey.mapper.AuthChallengeMapper;
 import com.example.obd2linkbackend.passkey.mapper.PassKeysMapper;
@@ -23,6 +24,7 @@ import com.example.obd2linkbackend.passkey.service.WebAuthnService;
 import com.example.obd2linkbackend.user.mapper.SessionMapper;
 import com.example.obd2linkbackend.user.mapper.UserMapper;
 import com.example.obd2linkbackend.user.model.dto.request.LoginReqDto;
+import com.example.obd2linkbackend.user.model.dto.request.ReauthOptionsReqDto;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
 import com.example.obd2linkbackend.user.model.dto.response.LoginResDto;
 import com.example.obd2linkbackend.user.model.entity.SessionEntity;
@@ -343,5 +345,10 @@ public class WebAuthnServiceImpl implements WebAuthnService{
         loginResDto.setToken(token);
         loginResDto.setExpiresAt(expiresAt);
         return loginResDto;
+    }
+
+    @Transactional 
+    public PublicKeyCredentialCreationOptions generateReauthChallenge(CustomUserDetails user, ReauthOptionsReqDto dto){
+        
     }
 }

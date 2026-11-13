@@ -24,6 +24,27 @@
             )
     </insert>
 
+    <!-- 再認証チャレンジ登録 -->
+    <insert id="insertReauthChallenge" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO
+            reauth_challenges (
+                user_id
+                , session_id
+                , challenge
+                , purpose
+                , target_id
+                , expires_at
+            )
+            VALUES (
+                #{userId}
+                , #{sessionId}
+                , #{challenge}
+                , #{purpose}
+                , #{targetId,jdbcType=VARCHAR}
+                , #{expiresAt}
+            )
+    </insert>
+
     <!-- チャレンジ取得 -->
     <select id="selectChallenge" resultType="com.example.obd2linkbackend.passkey.model.entity.AuthChallengeEntity">
         SELECT

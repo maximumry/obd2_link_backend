@@ -362,7 +362,7 @@ public class WebAuthnServiceImpl implements WebAuthnService{
         // 生成したチャレンジをDBへ保存
         Instant now = Instant.now();
         ReauthChallengeEntity entity = ReauthChallengeEntity.create(user.getUserId(), user.getSessionId(), challengeBytes, dto.getPurpose(), dto.getTargetId(), now.plus(Duration.ofMinutes(5)));
-        authChallengeMapper.insertChallenge(entity);
+        authChallengeMapper.insertReauthChallenge(entity);
 
         return options;
     }

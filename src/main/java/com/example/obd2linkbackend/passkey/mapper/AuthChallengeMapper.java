@@ -4,12 +4,15 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.example.obd2linkbackend.passkey.model.entity.AuthChallengeEntity;
+import com.example.obd2linkbackend.passkey.model.entity.ReauthChallengeEntity;
 import com.example.obd2linkbackend.passkey.model.enums.ChallengePurpose;
 
 @Mapper
 public interface AuthChallengeMapper {
 
     void insertChallenge(AuthChallengeEntity entity);
+
+    int insertReauthChallenge(ReauthChallengeEntity entity);
 
     AuthChallengeEntity selectChallenge(@Param("challenge") byte[] challenge, @Param("purpose") ChallengePurpose purpose);
 

@@ -21,7 +21,7 @@ public class ReauthController {
 
     private final WebAuthnService webAuthnService;
 
-    @PostMapping 
+    @PostMapping("/options")
     public PublicKeyCredentialRequestOptions generateReauthOptions(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody ReauthOptionsReqDto dto){
         return webAuthnService.generateReauthChallenge(user, dto);
     }

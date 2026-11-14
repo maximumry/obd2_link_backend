@@ -18,7 +18,7 @@ OBD2記録端末 ─ HTTPS / JSON ──┘
 | `sessions` | `session_id`、`user_id`、`token_hash`、`expires_at` |
 | `passkeys` | `passkey_id`（主キー）、`credential_id`（一意）、`user_id`、`public_key`、`sign_count`、`name`、`created_at` |
 | `auth_challenges` | `id`、`challenge`、`purpose`、`user_id`（登録時は仮ID）、`session_id`（再認証時）、`registration_data`（登録時のみ）、`expires_at` |
-| `reauth_tokens` | `id`、`session_id`、`token_hash`、`purpose`、`target_id`、`expires_at` |
+| `reauth_tokens` | `id`、`user_id`、`session_id`、`token_hash`、`purpose`、`target_id`、`expires_at` |
 | `devices` | `id`、`user_id`（一意）、`token_hash` |
 | `trips` | `trip_id`、`device_id`、`started_at`、`ended_at`、`last_received_at`、`deleted_at` |
 | `telemetry` | `device_id`、`trip_id`、`sequence`、`timestamp`、`received_at`、計測値 |

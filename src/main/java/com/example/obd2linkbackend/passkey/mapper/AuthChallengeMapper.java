@@ -18,4 +18,8 @@ public interface AuthChallengeMapper {
 
     int deleteChallenge(@Param("id") Integer id);
 
+    ReauthChallengeEntity selectReauthChallenge(@Param("challenge") byte[] challenge);
+
+    int deleteReauthChallenge(@Param("id") Integer id);
+
 }

@@ -24,12 +24,15 @@ import com.example.obd2linkbackend.passkey.model.enums.ChallengePurpose;
 import com.example.obd2linkbackend.passkey.model.enums.ReauthPurpose;
 import com.example.obd2linkbackend.passkey.service.WebAuthnService;
 import com.example.obd2linkbackend.user.mapper.SessionMapper;
+import com.example.obd2linkbackend.user.mapper.ReauthTokenMapper;
 import com.example.obd2linkbackend.user.mapper.UserMapper;
 import com.example.obd2linkbackend.user.model.dto.request.LoginReqDto;
 import com.example.obd2linkbackend.user.model.dto.request.ReauthOptionsReqDto;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
 import com.example.obd2linkbackend.user.model.dto.response.LoginResDto;
+import com.example.obd2linkbackend.user.model.dto.response.ReauthResDto;
 import com.example.obd2linkbackend.user.model.entity.SessionEntity;
+import com.example.obd2linkbackend.user.model.entity.ReauthTokenEntity;
 import com.example.obd2linkbackend.user.model.entity.UserEntity;
 import com.example.obd2linkbackend.user.service.SessionService;
 import com.example.obd2linkbackend.user.service.UserService;
@@ -76,6 +79,7 @@ public class WebAuthnServiceImpl implements WebAuthnService{
     private final PassKeysMapper passKeysMapper;
     private final SessionService sessionService;
     private final SessionMapper sessionMapper;
+    private final ReauthTokenMapper reauthTokenMapper;
     private final UserService userService;
 
     // クライアントが使用する公開鍵の種類の指定と、アルゴリズムを指定
@@ -365,5 +369,121 @@ public class WebAuthnServiceImpl implements WebAuthnService{
         authChallengeMapper.insertReauthChallenge(entity);
 
         return options;
+    }
+
+    @Transactional 
+    public ReauthResDto verifyReauthChallenge(CustomUserDetails user, String reauthResponseJSON){
+        // clientDataJSONからチャレンジを取り出す
+        byte[] challengeBytes;
+        try{
+            JsonNode reauthNode = objectMapper.readTree(reauthResponseJSON);
+            byte[] clientDataJson = Base64.getUrlDecoder().decode(
+                reauthNode.get("response").get("clientDataJSON").asText()
+            );
+            JsonNode clientData = objectMapper.readTree(clientDataJson);
+            challengeBytes = Base64.getUrlDecoder().decode(
+                clientData.get("challenge").asText()
+            );
+        }catch(IOException ex){
+            throw new IllegalArgumentException("clientDataJSONの形式が正しくありません");
+        }
+
+        // 受け取ったチャレンジに一致する有効な再認証レコードを取得
+        ReauthChallengeEntity reauthChallengeEntity = authChallengeMapper.selectReauthChallenge(challengeBytes);
+        if(reauthChallengeEntity == null){
+            throw new ChallengeVerificationException("チャレンジが見つからないか、期限切れです");
+        }
+        if(!user.getUserId().equals(reauthChallengeEntity.getUserId())
+                || !user.getSessionId().equals(reauthChallengeEntity.getSessionId())){
+            throw new ChallengeVerificationException("再認証のユーザーまたはセッションが一致しません");
+        }
+
+        // サーバーで生成したチャレンジと、クライアント側のチャレンジを検証
+        WebAuthnManager manager = WebAuthnManager.createNonStrictWebAuthnManager();
+        ServerProperty serverProperty = new ServerProperty(
+            new Origin("http://localhost:8080"),
+            "localhost",
+            new DefaultChallenge(reauthChallengeEntity.getChallenge())
+        );
+        AuthenticationData authenticationData = manager.parseAuthenticationResponseJSON(reauthResponseJSON);
+        byte[] credentialId = authenticationData.getCredentialId();
+        PassKeyEntity passKeyEntity = passKeysMapper.selectByCredentialId(credentialId);
+        if(passKeyEntity == null){
+            throw new ChallengeVerificationException("登録済みのパスキーが見つかりません");
+        }
+        if(!user.getUserId().equals(passKeyEntity.getUserId())){
+            throw new ChallengeVerificationException("本人のパスキーではありません");
+        }
+        ObjectConverter objectConverter = new ObjectConverter();
+        COSEKey coseKey = objectConverter.getCborConverter()
+            .readValue(passKeyEntity.getPublicKey(), COSEKey.class
+        );
+        AttestedCredentialData attestedCredentialData = new AttestedCredentialData(
+            AAGUID.NULL,
+            passKeyEntity.getCredentialId(),
+            coseKey
+        );
+        CredentialRecord credentialRecord = new CredentialRecordImpl(
+            new NoneAttestationStatement(),
+            null,
+            null,
+            null,
+            passKeyEntity.getSignCount(),
+            attestedCredentialData,
+            new AuthenticationExtensionsAuthenticatorOutputs<>(),
+            null,
+            null,
+            null
+        );
+        AuthenticationParameters authenticationParameters = new AuthenticationParameters(
+            serverProperty,
+            credentialRecord,
+            null,
+            true,
+            true
+        );
+        manager.verify(authenticationData, authenticationParameters);
+
+        // 一度使用した再認証チャレンジの再利用を防ぐ
+        int deleteCount = authChallengeMapper.deleteReauthChallenge(reauthChallengeEntity.getId());
+        if(deleteCount != 1){
+            throw new ChallengeVerificationException("チャレンジは既に使用されています");
+        }
+
+        long signCount = authenticationData.getAuthenticatorData().getSignCount();
+        int updatedCount = passKeysMapper.updateSignCount(credentialId, signCount);
+        if(updatedCount != 1){
+            throw new ChallengeVerificationException("パスキー情報の更新に失敗しました");
+        }
+
+        // 再認証トークンを発行し、DBにはハッシュのみ保存する
+        String token = sessionService.generateToken();
+        Instant expiresAt = Instant.now().plus(Duration.ofMinutes(5));
+        String tokenHash;
+        try{
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            tokenHash = HexFormat.of().formatHex(md.digest(token.getBytes(StandardCharsets.UTF_8)));
+        }catch(NoSuchAlgorithmException ex){
+            throw new IllegalStateException("ハッシュアルゴリズムが見つかりません", ex);
+        }
+
+        ReauthTokenEntity tokenEntity = ReauthTokenEntity.create(
+            user.getUserId(),
+            user.getSessionId(),
+            tokenHash,
+            reauthChallengeEntity.getPurpose(),
+            reauthChallengeEntity.getTargetId(),
+            expiresAt
+        );
+        int insertedCount = reauthTokenMapper.insertReauthToken(tokenEntity);
+        if(insertedCount != 1){
+            throw new IllegalStateException("再認証トークンの保存に失敗しました");
+        }
+
+        // ハッシュ化前のトークンと有効期限を返す
+        ReauthResDto dto = new ReauthResDto();
+        dto.setToken(token);
+        dto.setExpiresAt(expiresAt);
+        return dto;
     }
 }

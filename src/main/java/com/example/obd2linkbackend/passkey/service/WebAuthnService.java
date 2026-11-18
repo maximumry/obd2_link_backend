@@ -5,6 +5,7 @@ import com.example.obd2linkbackend.user.model.dto.request.LoginReqDto;
 import com.example.obd2linkbackend.user.model.dto.request.ReauthOptionsReqDto;
 import com.example.obd2linkbackend.user.model.dto.request.UserReqDto;
 import com.example.obd2linkbackend.user.model.dto.response.LoginResDto;
+import com.example.obd2linkbackend.user.model.dto.response.ReauthResDto;
 import com.webauthn4j.data.PublicKeyCredentialCreationOptions;
 import com.webauthn4j.data.PublicKeyCredentialRequestOptions;
 
@@ -26,4 +27,7 @@ public interface WebAuthnService {
 
     @Transactional 
     PublicKeyCredentialRequestOptions generateReauthChallenge(CustomUserDetails user, ReauthOptionsReqDto dto);
+
+    @Transactional
+    ReauthResDto verifyReauthChallenge(CustomUserDetails user, String reauthResponseJSON);
 }

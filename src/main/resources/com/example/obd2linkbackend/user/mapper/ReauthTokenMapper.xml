@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.obd2linkbackend.user.mapper.ReauthTokenMapper">
+
+    <insert id="insertReauthToken">
+        INSERT INTO reauth_tokens (
+            user_id
+            , session_id
+            , token_hash
+            , purpose
+            , target_id
+            , expires_at
+        ) VALUES (
+            #{userId}
+            , #{sessionId}
+            , #{tokenHash}
+            , #{purpose}
+            , #{targetId,jdbcType=VARCHAR}
+            , #{expiresAt}
+        )
+    </insert>
+
+</mapper>

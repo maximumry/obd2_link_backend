@@ -68,4 +68,25 @@
             id = #{id}
     </delete>
 
+    <!-- 再認証チャレンジ取得 -->
+    <select id="selectReauthChallenge" resultType="com.example.obd2linkbackend.passkey.model.entity.ReauthChallengeEntity">
+        SELECT
+            id
+            , user_id AS userId
+            , session_id AS sessionId
+            , challenge
+            , purpose
+            , target_id AS targetId
+            , expires_at AS expiresAt
+        FROM reauth_challenges
+        WHERE challenge = #{challenge}
+          AND expires_at > now()
+    </select>
+
+    <!-- 再認証チャレンジ削除 -->
+    <delete id="deleteReauthChallenge">
+        DELETE FROM reauth_challenges
+        WHERE id = #{id}
+    </delete>
+
 </mapper>

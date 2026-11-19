@@ -5,6 +5,7 @@
 
 <mapper namespace="com.example.obd2linkbackend.user.mapper.ReauthTokenMapper">
 
+    <!-- 再認証時のトークンを保存 -->
     <insert id="insertReauthToken">
         INSERT INTO reauth_tokens (
             user_id
@@ -22,5 +23,16 @@
             , #{expiresAt}
         )
     </insert>
+
+    <!-- 全ての条件が一致したトークンを削除 -->
+    <delete id="consumeReauthToken">
+        DELETE FROM reauth_tokens
+        WHERE token_hash = #{tokenHash}
+            AND user_id = #{userId}
+            AND session_id = #{sessionId}
+            AND purpose = #{purpose}
+            AND target_id = #{targetId}
+            AND expires_at > clock_timestamp()
+    </delete>
 
 </mapper>

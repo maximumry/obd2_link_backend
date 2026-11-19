@@ -16,6 +16,13 @@
         WHERE id = #{id}
     </select>
 
+    <select id="lockUserById" resultType="java.lang.Integer" useCache="false" flushCache="true">
+        SELECT id
+        FROM users
+        WHERE id = #{userId}
+        FOR UPDATE
+    </select>
+
     <!-- ユーザー登録　-->
     <insert id="registerUser" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         INSERT INTO

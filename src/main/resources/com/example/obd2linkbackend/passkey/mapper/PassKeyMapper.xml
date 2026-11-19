@@ -41,4 +41,25 @@
             SET sign_count = GREATEST(sign_count, #{signCount})
         WHERE credential_id = #{credentialId}
     </update>
+
+    <select id="existsPassKey" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM passkeys
+            WHERE user_id = #{userId}
+              AND credential_id = #{credentialId}
+        )
+    </select>
+
+    <select id="countPassKeysByUserId" resultType="long">
+        SELECT COUNT(*)
+        FROM passkeys
+        WHERE user_id = #{userId}
+    </select>
+
+    <delete id="deletePassKey">
+        DELETE FROM passkeys
+        WHERE user_id = #{userId}
+          AND credential_id = #{credentialId}
+    </delete>
 </mapper>

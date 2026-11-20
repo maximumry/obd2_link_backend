@@ -11,7 +11,7 @@ public interface ReauthTokenMapper {
 
     int insertReauthToken(ReauthTokenEntity entity);
 
-    void consumeReauthToken(
+    int consumeReauthToken(
         @Param("tokenHash") String tokenHash,
         @Param("userId") Integer userId,
         @Param("sessionId") Long sessionId,
